@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34322.80
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibEthernetIPStack", "LibEthernetIPStack.csproj", "{34274848-6C5D-4F0C-BEC6-DA80209E16EA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{34274848-6C5D-4F0C-BEC6-DA80209E16EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34274848-6C5D-4F0C-BEC6-DA80209E16EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34274848-6C5D-4F0C-BEC6-DA80209E16EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34274848-6C5D-4F0C-BEC6-DA80209E16EA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E50924B8-63A8-410A-ABF0-BB2BD4ABFEB8}
+	EndGlobalSection
+EndGlobal
