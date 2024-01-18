@@ -25,22 +25,19 @@
 *********************************************************************/
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Net.Sockets;
 using System.Net;
 using System.Diagnostics;
-using System.ComponentModel;
-using System.Threading;
-using System.Net.EnIPStack.ObjectsLibrary;
 using System.Reflection;
 using System.IO;
+using Newtonsoft.Json;
+using LibEthernetIPStack.ObjectsLibrary;
 
-namespace System.Net.EnIPStack
+namespace LibEthernetIPStack
 {
     public delegate void DeviceArrivalHandler(EnIPRemoteDevice device);
 
-    public enum EnIPNetworkStatus { OnLine, OnLineReadRejected, OnLineWriteRejected, OnLineForwardOpenReject, OffLine  };
+    public enum EnIPNetworkStatus { OnLine, OnLineReadRejected, OnLineWriteRejected, OnLineForwardOpenReject, OffLine };
 
     public class EnIPClient
     {
@@ -52,17 +49,17 @@ namespace System.Net.EnIPStack
         // Local endpoint is important for broadcast messages
         // When more than one interface are present, broadcast
         // requests are sent on the first one, not all !
-        public EnIPClient(String End_point, int TcpTimeout=100)
+        public EnIPClient(string End_point, int TcpTimeout = 100)
         {
             this.TcpTimeout = TcpTimeout;
             udp = new EnIPUDPTransport(End_point, 0);
             udp.EncapMessageReceived += new EncapMessageReceivedHandler(on_MessageReceived);
         }
 
-        void on_MessageReceived(object sender, byte[] packet, Encapsulation_Packet EncapPacket, int offset, int msg_length, System.Net.IPEndPoint remote_address)
+        void on_MessageReceived(object sender, byte[] packet, Encapsulation_Packet EncapPacket, int offset, int msg_length, IPEndPoint remote_address)
         {
             // ListIdentity response
-            if ((EncapPacket.Command == EncapsulationCommands.ListIdentity) && (EncapPacket.Length != 0) && EncapPacket.IsOK)
+            if (EncapPacket.Command == EncapsulationCommands.ListIdentity && EncapPacket.Length != 0 && EncapPacket.IsOK)
             {
                 if (DeviceArrival != null)
                 {
@@ -84,7 +81,7 @@ namespace System.Net.EnIPStack
             Encapsulation_Packet p = new Encapsulation_Packet(EncapsulationCommands.ListIdentity);
             p.Command = EncapsulationCommands.ListIdentity;
             udp.Send(p, ep);
-            Trace.WriteLine("Send ListIdentity to "+ep.Address.ToString());
+            Trace.WriteLine("Send ListIdentity to " + ep.Address.ToString());
         }
         // Broadcast ListIdentity
         public void DiscoverServers()
@@ -99,26 +96,33 @@ namespace System.Net.EnIPStack
         // get set are used by the property grid in EnIPExplorer
         public ushort DataLength;
         public ushort EncapsulationVersion { get; set; }
-        private EnIPSocketAddress SocketAddress;
+        public EnIPSocketAddress SocketAddress { get; set; }
+        public short sin_family => SocketAddress.sin_family;
+        public ushort sin_port => SocketAddress.sin_port;
+        public uint sin_addr => SocketAddress.sin_addr;
+        public string sin_addr_str => Helpers.UInt32ToIPAddress(sin_addr).ToString();
         public ushort VendorId { get; set; }
         public ushort DeviceType { get; set; }
         public ushort ProductCode { get; set; }
         public string Revision { get { return _Revision[0].ToString() + "." + _Revision[1].ToString(); } set { } }
+        [JsonIgnore]
         public byte[] _Revision = new byte[2];
         public short Status { get; set; }
         public uint SerialNumber { get; set; }
         public string ProductName { get; set; }
         public IdentityObjectState State { get; set; }
 
-        private IPEndPoint ep; // The Tcp endpoint
-        private IPEndPoint epUdp; // The Udp endpoint : same IP, port 2222
+        private IPEndPoint ep { get; } // The Tcp endpoint
+        private IPEndPoint epUdp { get; } // The Udp endpoint : same IP, port 2222
         // Not a property to avoid browsable in propertyGrid, also [Browsable(false)] could be used
         public IPAddress IPAdd() { return ep.Address; }
 
+        [JsonIgnore]
         public bool autoConnect = true;
+        [JsonIgnore]
         public bool autoRegisterSession = true;
 
-        private UInt32 SessionHandle=0; // When Register Session is set
+        private uint SessionHandle = 0; // When Register Session is set
 
         private EnIPTCPClientTransport Tcpclient;
         private static EnIPUDPTransport UdpListener;
@@ -171,7 +175,7 @@ namespace System.Net.EnIPStack
             int strSize = DataArray[Offset];
             Offset += 1;
 
-            ProductName = System.Text.ASCIIEncoding.ASCII.GetString(DataArray, Offset, strSize);
+            ProductName = Encoding.ASCII.GetString(DataArray, Offset, strSize);
             Offset += strSize;
 
             State = (IdentityObjectState)DataArray[Offset];
@@ -185,19 +189,22 @@ namespace System.Net.EnIPStack
         public EnIPRemoteDevice(IPEndPoint ep, int TcpTimeout, byte[] DataArray, ref int Offset)
         {
             this.ep = ep;
-            this.epUdp = new IPEndPoint(ep.Address, 2222);
+            epUdp = new IPEndPoint(ep.Address, 2222);
             Tcpclient = new EnIPTCPClientTransport(TcpTimeout);
             FromListIdentityResponse(DataArray, ref Offset);
         }
 
-        public EnIPRemoteDevice(IPEndPoint ep, int TcpTimeout=100)
+        public EnIPRemoteDevice(IPEndPoint ep, int TcpTimeout = 100)
         {
             this.ep = ep;
-            this.epUdp = new IPEndPoint(ep.Address, 2222);
+            epUdp = new IPEndPoint(ep.Address, 2222);
             Tcpclient = new EnIPTCPClientTransport(TcpTimeout);
             ProductName = "";
         }
+        public EnIPRemoteDevice()
+        {
 
+        }
         public void Dispose()
         {
             if (IsConnected())
@@ -206,11 +213,11 @@ namespace System.Net.EnIPStack
 
         public void Class1Activate(IPEndPoint ep)
         {
-            if (UdpListener==null)
+            if (UdpListener == null)
                 UdpListener = new EnIPUDPTransport(ep.Address.ToString(), ep.Port);
         }
 
-        public void Class1AddMulticast(String IP)
+        public void Class1AddMulticast(string IP)
         {
             if (UdpListener != null)
                 UdpListener.JoinMulticastGroup(IP);
@@ -240,7 +247,7 @@ namespace System.Net.EnIPStack
             EncapsulationVersion = newset.EncapsulationVersion;
             SocketAddress = newset.SocketAddress;
             VendorId = newset.VendorId;
-            DeviceType=newset.DeviceType;
+            DeviceType = newset.DeviceType;
             ProductCode = newset.ProductCode;
             _Revision = newset._Revision;
             Status = newset.Status;
@@ -300,11 +307,11 @@ namespace System.Net.EnIPStack
                     lock (LockTransaction)
                         Length = Tcpclient.SendReceive(p, out Encapacket, out Offset, ref packet);
 
-                     Trace.WriteLine("Send ListIdentity to " + ep.Address.ToString());
+                    Trace.WriteLine("Send ListIdentity to " + ep.Address.ToString());
 
                     if (Length < 26) return false; // never appears in a normal situation
 
-                    if ((Encapacket.Command == EncapsulationCommands.ListIdentity) && (Encapacket.Length != 0) && Encapacket.IsOK)
+                    if (Encapacket.Command == EncapsulationCommands.ListIdentity && Encapacket.Length != 0 && Encapacket.IsOK)
                     {
                         Offset += 2;
                         FromListIdentityResponse(packet, ref Offset);
@@ -316,7 +323,7 @@ namespace System.Net.EnIPStack
                         Trace.WriteLine("Unicast TCP ListIdentity fail");
                 }
             }
-            catch 
+            catch
             {
                 Trace.WriteLine("Unicast TCP ListIdentity fail");
             }
@@ -329,7 +336,7 @@ namespace System.Net.EnIPStack
         {
             if (autoConnect) Connect();
 
-            if ((Tcpclient.IsConnected() == true) && (SessionHandle == 0))
+            if (Tcpclient.IsConnected() == true && SessionHandle == 0)
             {
                 byte[] b = new byte[] { 1, 0, 0, 0 };
                 Encapsulation_Packet p = new Encapsulation_Packet(EncapsulationCommands.RegisterSession, 0, b);
@@ -358,21 +365,21 @@ namespace System.Net.EnIPStack
             {
                 UCMM_RR_Packet m = new UCMM_RR_Packet(Service, true, DataPath, data);
                 Encapsulation_Packet p = new Encapsulation_Packet(EncapsulationCommands.SendRRData, SessionHandle, m.toByteArray());
-                
+
                 Encapsulation_Packet rep;
                 Offset = 0;
 
                 lock (LockTransaction)
                     Lenght = Tcpclient.SendReceive(p, out rep, out Offset, ref packet);
 
-                String ErrorMsg="TCP mistake";
+                string ErrorMsg = "TCP mistake";
 
                 if (Lenght > 24)
                 {
-                    if ((rep.IsOK) && (rep.Command == EncapsulationCommands.SendRRData))
+                    if (rep.IsOK && rep.Command == EncapsulationCommands.SendRRData)
                     {
                         m = new UCMM_RR_Packet(packet, ref Offset, Lenght);
-                        if ((m.IsOK) && (m.IsService(Service)))
+                        if (m.IsOK && m.IsService(Service))
                         {
                             // all is OK, and Offset is ready set at the beginning of data[]
                             return EnIPNetworkStatus.OnLine;
@@ -391,12 +398,12 @@ namespace System.Net.EnIPStack
 
                 if (Service == CIPServiceCodes.SetAttributeSingle)
                     return EnIPNetworkStatus.OnLineWriteRejected;
-                else 
+                else
                     return EnIPNetworkStatus.OnLineReadRejected;
             }
             catch
             {
-                Trace.TraceWarning("Error while sending reques to endpoint "+ep.ToString());
+                Trace.TraceWarning("Error while sending reques to endpoint " + ep.ToString());
                 return EnIPNetworkStatus.OffLine;
             }
         }
@@ -470,7 +477,7 @@ namespace System.Net.EnIPStack
 
             EnIPAttribut previousAtt = null;
 
-            EnIPAttribut[] Atts =new EnIPAttribut[] {Config, O2T, T2O };
+            EnIPAttribut[] Atts = new EnIPAttribut[] { Config, O2T, T2O };
 
             foreach (EnIPAttribut att in Atts)
             {
@@ -479,10 +486,10 @@ namespace System.Net.EnIPStack
                     byte[] DataPath;
 
                     Cid = att.myInstance.myClass.Id;
-                    if ((previousAtt != null) && (Cid == previousAtt.myInstance.myClass.Id))
+                    if (previousAtt != null && Cid == previousAtt.myInstance.myClass.Id)
                         Cid = null;
 
-                    Aid = ((att.Id == 3) && (att.myInstance.myClass.Id == 4)) ? null : (ushort?)att.Id;
+                    Aid = att.Id == 3 && att.myInstance.myClass.Id == 4 ? null : att.Id;
 
                     DataPath = EnIPPath.GetPath(Cid, att.myInstance.Id, Aid, att != Config);
                     Array.Copy(DataPath, 0, ConstructDataPath, offset, DataPath.Length);
@@ -505,13 +512,13 @@ namespace System.Net.EnIPStack
             return ForwardOpen(Config, O2T, T2O, out ClosePacket, conf, WriteConfig);
         }
 
-        public EnIPNetworkStatus ForwardOpen(EnIPAttribut Config, EnIPAttribut O2T, EnIPAttribut T2O, out ForwardClose_Packet ClosePacket, ForwardOpen_Config conf, bool WriteConfig=false)
+        public EnIPNetworkStatus ForwardOpen(EnIPAttribut Config, EnIPAttribut O2T, EnIPAttribut T2O, out ForwardClose_Packet ClosePacket, ForwardOpen_Config conf, bool WriteConfig = false)
         {
             ClosePacket = null;
 
-            byte[] DataPath = GetForwardOpenPath(Config, O2T, T2O );
+            byte[] DataPath = GetForwardOpenPath(Config, O2T, T2O);
 
-            if ((WriteConfig == true) && (Config != null)) // Add data segment
+            if (WriteConfig == true && Config != null) // Add data segment
             {
 
                 DataPath = EnIPPath.AddDataSegment(DataPath, Config.RawData);
@@ -595,7 +602,7 @@ namespace System.Net.EnIPStack
         public virtual bool EncodeFromDecodedMembers() { return false; } // Encode the existing RawData with the decoded membrer (maybe modified)
         public abstract EnIPNetworkStatus WriteDataToNetwork();
 
-        public abstract String GetStrPath();
+        public abstract string GetStrPath();
 
         public EnIPRemoteDevice RemoteDevice;
 
@@ -625,7 +632,7 @@ namespace System.Net.EnIPStack
             return Status;
         }
     }
-    
+
     public class EnIPClass : EnIPCIPObject
     {
 
@@ -650,23 +657,23 @@ namespace System.Net.EnIPStack
         }
 
 
-        public override String GetStrPath()
+        public override string GetStrPath()
         {
-            return Id.ToString()+".0";
+            return Id.ToString() + ".0";
         }
 
         public override EnIPNetworkStatus ReadDataFromNetwork()
         {
-            
+
             // Read all class static attributes
             byte[] ClassDataPath = EnIPPath.GetPath(Id, 0, null);
-            EnIPNetworkStatus ret= ReadDataFromNetwork(ClassDataPath, CIPServiceCodes.GetAttributesAll);
+            EnIPNetworkStatus ret = ReadDataFromNetwork(ClassDataPath, CIPServiceCodes.GetAttributesAll);
 
             // If rejected try to read all attributes one by one
-            if (ret == EnIPNetworkStatus.OnLineReadRejected) 
+            if (ret == EnIPNetworkStatus.OnLineReadRejected)
             {
 
-                MemoryStream rawbuffer=new MemoryStream();
+                MemoryStream rawbuffer = new MemoryStream();
 
                 ushort AttId = 1; // first static attribut number
 
@@ -685,7 +692,7 @@ namespace System.Net.EnIPStack
                 // yes OK like this, pull the data out of the stream into the RawData
                 if (rawbuffer.Length != 0)
                 {
-                    Status= ret = EnIPNetworkStatus.OnLine; // all is OK even if the last request is (always) rejected
+                    Status = ret = EnIPNetworkStatus.OnLine; // all is OK even if the last request is (always) rejected
                     RawData = rawbuffer.ToArray();
                 }
 
@@ -735,8 +742,8 @@ namespace System.Net.EnIPStack
         public EnIPInstance(EnIPClass Class, ushort Id, Type DecoderClass = null)
         {
             this.Id = Id;
-            this.myClass = Class;
-            this.RemoteDevice = Class.RemoteDevice;
+            myClass = Class;
+            RemoteDevice = Class.RemoteDevice;
             Status = EnIPNetworkStatus.OffLine;
             if (DecoderClass != null)
             {
@@ -752,7 +759,7 @@ namespace System.Net.EnIPStack
         }
 
 
-        public override String GetStrPath()
+        public override string GetStrPath()
         {
             return myClass.Id.ToString() + '.' + Id.ToString();
         }
@@ -780,18 +787,18 @@ namespace System.Net.EnIPStack
             CIPObjectLibrary classid = (CIPObjectLibrary)myClass.Id;
             try
             {
-                    if (DecoderClass == null)
-                    {
-                        var o = Activator.CreateInstance(Assembly.GetExecutingAssembly().FullName, "System.Net.EnIPStack.ObjectsLibrary.CIP_" + classid.ToString() + "_instance");
-                        DecodedMembers = (CIPObject)o.Unwrap();
-                    }
-                    else
-                    {
-                        var o = Activator.CreateInstance(DecoderClass);
-                        DecodedMembers = (CIPObject)o;
+                if (DecoderClass == null)
+                {
+                    var o = Activator.CreateInstance(Assembly.GetExecutingAssembly().FullName, "System.Net.EnIPStack.ObjectsLibrary.CIP_" + classid.ToString() + "_instance");
+                    DecodedMembers = (CIPObject)o.Unwrap();
+                }
+                else
+                {
+                    var o = Activator.CreateInstance(DecoderClass);
+                    DecodedMembers = (CIPObject)o;
 
-                    }
-                    return true;
+                }
+                return true;
             }
             catch { }
 
@@ -847,18 +854,18 @@ namespace System.Net.EnIPStack
         public EnIPAttribut(EnIPInstance Instance, ushort Id)
         {
             this.Id = Id;
-            this.myInstance = Instance;
-            this.RemoteDevice = Instance.RemoteDevice;
+            myInstance = Instance;
+            RemoteDevice = Instance.RemoteDevice;
             Status = EnIPNetworkStatus.OffLine;
         }
-        
-        public override bool EncodeFromDecodedMembers() 
+
+        public override bool EncodeFromDecodedMembers()
         {
             byte[] NewRaw = new byte[RawData.Length];
 
             try
             {
-                int Idx=0;
+                int Idx = 0;
                 if (DecodedMembers.EncodeAttr(Id, ref Idx, NewRaw) == true)
                 {
                     RawData = NewRaw;
@@ -879,9 +886,9 @@ namespace System.Net.EnIPStack
             return WriteDataToNetwork(DataPath, CIPServiceCodes.SetAttributeSingle);
         }
 
-        public override String GetStrPath()
+        public override string GetStrPath()
         {
-            return myInstance.myClass.Id.ToString()+'.'+ myInstance.Id.ToString()+"."+ Id.ToString();
+            return myInstance.myClass.Id.ToString() + '.' + myInstance.Id.ToString() + "." + Id.ToString();
         }
 
         public override EnIPNetworkStatus ReadDataFromNetwork()
@@ -920,16 +927,16 @@ namespace System.Net.EnIPStack
 
         public void Class1UpdateO2T()
         {
-            SequenceItem.data = this.RawData; // Normaly don't change between call
+            SequenceItem.data = RawData; // Normaly don't change between call
             RemoteDevice.Class1SendO2T(SequenceItem);
         }
 
         // Coming from an udp class1 device, with a previous ForwardOpen action
         public void On_ItemMessageReceived(object sender, byte[] packet, SequencedAddressItem ItemPacket, int offset, int msg_length, IPEndPoint remote_address)
-        {           
+        {
             if (ItemPacket.ConnectionId != T2O_ConnectionId) return;
 
-            if ((msg_length - offset) == 0) return;
+            if (msg_length - offset == 0) return;
 
             RawData = new byte[msg_length - offset];
             Array.Copy(packet, offset, RawData, 0, RawData.Length);

@@ -23,14 +23,13 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 *********************************************************************/
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Net.NetworkInformation;
 using System.ComponentModel;
 
-namespace System.Net.EnIPStack.ObjectsLibrary
+namespace LibEthernetIPStack.ObjectsLibrary
 {
     // CIP_EtherNetLink_class not required, nothing new than in CIPObjectBaseClass
 
@@ -39,50 +38,50 @@ namespace System.Net.EnIPStack.ObjectsLibrary
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public class EtherNetLinkInterfaceCounters
         {
-            public UInt32? In_Octets { get; set; }
-            public UInt32? In_Ucast_Packets { get; set; }
-            public UInt32? In_NUcast_Packets { get; set; }
-            public UInt32? In_Discards { get; set; }
-            public UInt32? In_Errors { get; set; }
-            public UInt32? In_Unknown_Protos { get; set; }
-            public UInt32? Out_Octets { get; set; }
-            public UInt32? Out_Ucast_Packets { get; set; }
-            public UInt32? Out_NUcast_Packets { get; set; }
-            public UInt32? Out_Discards { get; set; }
-            public UInt32? Out_Errors { get; set; }
+            public uint? In_Octets { get; set; }
+            public uint? In_Ucast_Packets { get; set; }
+            public uint? In_NUcast_Packets { get; set; }
+            public uint? In_Discards { get; set; }
+            public uint? In_Errors { get; set; }
+            public uint? In_Unknown_Protos { get; set; }
+            public uint? Out_Octets { get; set; }
+            public uint? Out_Ucast_Packets { get; set; }
+            public uint? Out_NUcast_Packets { get; set; }
+            public uint? Out_Discards { get; set; }
+            public uint? Out_Errors { get; set; }
             public override string ToString() { return ""; }
         }
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public class EtherNetLinkMediaCounters
         {
-            public UInt32? Alignment_Errors { get; set; }
-            public UInt32? FCS_Errors { get; set; }
-            public UInt32? Single_Collisions { get; set; }
-            public UInt32? Multiple_Collisions { get; set; }
-            public UInt32? SQE_Test_Errors { get; set; }
-            public UInt32? Deferred_Transmissions { get; set; }
-            public UInt32? Late_Collisions { get; set; }
-            public UInt32? Excessive_Collisions { get; set; }
-            public UInt32? MAC_Transmit_Errors { get; set; }
-            public UInt32? Carrier_Sense_Errors { get; set; }
-            public UInt32? Frame_Too_Long { get; set; }
-            public UInt32? MAC_Receive_Errors { get; set; }
+            public uint? Alignment_Errors { get; set; }
+            public uint? FCS_Errors { get; set; }
+            public uint? Single_Collisions { get; set; }
+            public uint? Multiple_Collisions { get; set; }
+            public uint? SQE_Test_Errors { get; set; }
+            public uint? Deferred_Transmissions { get; set; }
+            public uint? Late_Collisions { get; set; }
+            public uint? Excessive_Collisions { get; set; }
+            public uint? MAC_Transmit_Errors { get; set; }
+            public uint? Carrier_Sense_Errors { get; set; }
+            public uint? Frame_Too_Long { get; set; }
+            public uint? MAC_Receive_Errors { get; set; }
             public override string ToString() { return ""; }
         }
         [CIPAttributId(1)]
-        public UInt32? Interface_Speed { get; set; }
+        public uint? Interface_Speed { get; set; }
         [CIPAttributId(2)]
-        public UInt32? Interface_Flags { get; set; }
+        public uint? Interface_Flags { get; set; }
         [CIPAttributId(3)]
         public string Physical_Address { get; set; }
         [CIPAttributId(4)]
-        public EtherNetLinkInterfaceCounters InterfaceCounters  { get; set; }
+        public EtherNetLinkInterfaceCounters InterfaceCounters { get; set; }
         [CIPAttributId(5)]
-        public EtherNetLinkMediaCounters MediaCounters { get; set; }       
+        public EtherNetLinkMediaCounters MediaCounters { get; set; }
         [CIPAttributId(6)]
-        public UInt16? Control_Bits { get; set; }
+        public ushort? Control_Bits { get; set; }
         [CIPAttributId(6)]
-        public UInt16? Forced_Interface_Speed { get; set; }
+        public ushort? Forced_Interface_Speed { get; set; }
         [CIPAttributId(7)]
         public byte? Interface_Type { get; set; }
         [CIPAttributId(8)]
@@ -90,7 +89,7 @@ namespace System.Net.EnIPStack.ObjectsLibrary
         [CIPAttributId(9)]
         public byte? Admin_State { get; set; }
         [CIPAttributId(10)]
-        public String Interface_Label { get; set; }
+        public string Interface_Label { get; set; }
 
         public CIP_EtherNetLink_instance() { AttIdMax = 10; }
 
@@ -135,19 +134,19 @@ namespace System.Net.EnIPStack.ObjectsLibrary
                 case 5:
                     MediaCounters = new EtherNetLinkMediaCounters
                     {
-                        Alignment_Errors= GetUInt32(ref Idx, b),
-                        FCS_Errors= GetUInt32(ref Idx, b),
-                        Single_Collisions= GetUInt32(ref Idx, b),
-                        Multiple_Collisions= GetUInt32(ref Idx, b),
-                        SQE_Test_Errors= GetUInt32(ref Idx, b),
-                        Deferred_Transmissions= GetUInt32(ref Idx, b),
+                        Alignment_Errors = GetUInt32(ref Idx, b),
+                        FCS_Errors = GetUInt32(ref Idx, b),
+                        Single_Collisions = GetUInt32(ref Idx, b),
+                        Multiple_Collisions = GetUInt32(ref Idx, b),
+                        SQE_Test_Errors = GetUInt32(ref Idx, b),
+                        Deferred_Transmissions = GetUInt32(ref Idx, b),
                         Late_Collisions = GetUInt32(ref Idx, b),
                         Excessive_Collisions = GetUInt32(ref Idx, b),
                         MAC_Transmit_Errors = GetUInt32(ref Idx, b),
                         Carrier_Sense_Errors = GetUInt32(ref Idx, b),
                         Frame_Too_Long = GetUInt32(ref Idx, b),
                         MAC_Receive_Errors = GetUInt32(ref Idx, b)
-                     };
+                    };
                     return true;
                 case 6:
                     Control_Bits = GetUInt16(ref Idx, b);

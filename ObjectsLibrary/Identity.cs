@@ -23,13 +23,12 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 *********************************************************************/
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.ComponentModel;
 
-namespace System.Net.EnIPStack.ObjectsLibrary
+namespace LibEthernetIPStack.ObjectsLibrary
 {
     // CIP_Identity_class not required, nothing new than in CIPObjectBaseClass
     // but implemented here to show how it should be done if additional attribut are present
@@ -53,32 +52,32 @@ namespace System.Net.EnIPStack.ObjectsLibrary
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public class IdentityRevision
         {
-            public Byte? Major_Revision { get; set; }
-            public Byte? Minor_Revision { get; set; }
-            public override string ToString() {return "";}
+            public byte? Major_Revision { get; set; }
+            public byte? Minor_Revision { get; set; }
+            public override string ToString() { return ""; }
         }
 
         [CIPAttributId(1)]
-        public UInt16? Vendor_ID { get; set; }
+        public ushort? Vendor_ID { get; set; }
         [CIPAttributId(2)]
-        public UInt16? Device_Type { get; set; }
+        public ushort? Device_Type { get; set; }
         [CIPAttributId(3)]
-        public UInt16? Product_Code { get; set; }
+        public ushort? Product_Code { get; set; }
         [CIPAttributId(4)]
         public IdentityRevision Revision { get; set; }
         [CIPAttributId(5)]
-        public UInt16? Status { get; set; }
+        public ushort? Status { get; set; }
         [CIPAttributId(6)]
-        public UInt32? Serial_Number { get; set; }
+        public uint? Serial_Number { get; set; }
         [CIPAttributId(7)]
-        public String Product_Name { get; set; }
+        public string Product_Name { get; set; }
 
 
         public CIP_Identity_instance() { AttIdMax = 7; }
 
         public override string ToString()
         {
-            if (FilteredAttribut==-1)
+            if (FilteredAttribut == -1)
                 return "Identity instance";
             else
                 return "Identity instance attribute #" + FilteredAttribut.ToString();
@@ -97,9 +96,10 @@ namespace System.Net.EnIPStack.ObjectsLibrary
                     Product_Code = GetUInt16(ref Idx, b);
                     return true;
                 case 4:
-                    Revision = new IdentityRevision { 
-                        Major_Revision = Getbyte(ref Idx, b), 
-                        Minor_Revision = Getbyte(ref Idx, b) 
+                    Revision = new IdentityRevision
+                    {
+                        Major_Revision = Getbyte(ref Idx, b),
+                        Minor_Revision = Getbyte(ref Idx, b)
                     };
                     return true;
                 case 5:

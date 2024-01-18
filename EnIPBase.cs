@@ -28,8 +28,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
+using System.Net;
 
-namespace System.Net.EnIPStack
+namespace LibEthernetIPStack
 {
     // Volume 1 : C-1.4.2 Logical Segment
     // Remember for 16 bits address : (0x21 or 0x25 or 0x31) - 0x00 - 0xPF - 0xpf
@@ -40,28 +41,28 @@ namespace System.Net.EnIPStack
         {
             if (value > 255)
             {
-                path[offset] = (byte)(code|0x1);
+                path[offset] = (byte)(code | 0x1);
                 path[offset + 2] = (byte)(value & 0xFF);
                 path[offset + 3] = (byte)((value & 0xFF00) >> 8);
                 offset += 4;
             }
             else
             {
-                path[offset] = (byte)code;
+                path[offset] = code;
                 path[offset + 1] = (byte)(value & 0xFF);
                 offset += 2;
             }
         }
 
-        public static byte[] GetPath(ushort? Class, ushort Instance, ushort? Attribut=null, bool IsConnectionPoint=false)
+        public static byte[] GetPath(ushort? Class, ushort Instance, ushort? Attribut = null, bool IsConnectionPoint = false)
         {
 
             byte[] path = new byte[12];
 
-            int size=0;
+            int size = 0;
 
             if (Class != null)
-                Fit(path,ref size,Class.Value,0x20);
+                Fit(path, ref size, Class.Value, 0x20);
 
             // It seems that this Instance value is always required : 0 is used to access class data
             // Volume 1 : Figure 1-2.5 Instance #0 Example
@@ -69,7 +70,7 @@ namespace System.Net.EnIPStack
                 Fit(path, ref size, Instance, 0x2C); // sure it's not the good way to encode 2C instead of 24            
             else
                 Fit(path, ref size, Instance, 0x24);
-   
+
             if (Attribut != null)
                 Fit(path, ref size, Attribut.Value, 0x30);
 
@@ -81,10 +82,10 @@ namespace System.Net.EnIPStack
 
         // Given in the form Class.Instance or Class.Instance.Attribut
         // for Class data should be Class.0
-        public static byte[] GetPath(String path)
+        public static byte[] GetPath(string path)
         {
-            String[] s=path.Split('.');
-            if (s.Length==3)
+            string[] s = path.Split('.');
+            if (s.Length == 3)
                 return GetPath(Convert.ToUInt16(s[0]), Convert.ToUInt16(s[1]), Convert.ToUInt16(s[2]));
             if (s.Length == 2)
                 return GetPath(Convert.ToUInt16(s[0]), Convert.ToUInt16(s[1]), null);
@@ -95,12 +96,12 @@ namespace System.Net.EnIPStack
         // & Table C-1.2 Port Segment Examples
         // & Volume 2 : 3-3.7 Connection Path
         // IPendPoint in the format x.x.x.x:x, port is optional
-        private static byte[] GetExtendedPath(String IPendPoint, byte[] LogicalSeg)
+        private static byte[] GetExtendedPath(string IPendPoint, byte[] LogicalSeg)
         {
             byte[] PortSegment = Encoding.ASCII.GetBytes(IPendPoint);
 
             int IPlenght = PortSegment.Length;
-            if ((IPlenght % 2) != 0) IPlenght++;
+            if (IPlenght % 2 != 0) IPlenght++;
 
             byte[] FullPath = new byte[LogicalSeg.Length + IPlenght + 2];
 
@@ -119,18 +120,18 @@ namespace System.Net.EnIPStack
             byte[] FullPath = new byte[Data.Length + ExtendedPath.Length + 2];
             Array.Copy(ExtendedPath, FullPath, ExtendedPath.Length);
             FullPath[ExtendedPath.Length] = 0x80;
-            FullPath[ExtendedPath.Length + 1] = (byte)(Data.Length / 2 + (Data.Length % 2));
+            FullPath[ExtendedPath.Length + 1] = (byte)(Data.Length / 2 + Data.Length % 2);
             Array.Copy(Data, 0, FullPath, ExtendedPath.Length + 2, Data.Length);
 
             return FullPath;
         }
-        public static byte[] GetExtendedPath(String IPendPoint, String LogicalSegment)
+        public static byte[] GetExtendedPath(string IPendPoint, string LogicalSegment)
         {
             byte[] LogicalSeg = GetPath(LogicalSegment);
             byte[] ExtendedPath = GetExtendedPath(IPendPoint, LogicalSeg);
             return ExtendedPath;
         }
-        public static byte[] GetExtendedPath(String IPAdress, ushort Class, ushort Instance, ushort? Attribut = null)
+        public static byte[] GetExtendedPath(string IPAdress, ushort Class, ushort Instance, ushort? Attribut = null)
         {
             byte[] LogicalSeg = GetPath(Class, Instance, Attribut);
             byte[] ExtendedPath = GetExtendedPath(IPAdress, LogicalSeg);
@@ -139,7 +140,7 @@ namespace System.Net.EnIPStack
 
         public static string GetPath(byte[] path)
         {
-            StringBuilder sb=new StringBuilder();
+            StringBuilder sb = new StringBuilder();
 
             int i = 0;
             do
@@ -168,35 +169,35 @@ namespace System.Net.EnIPStack
     public class Encapsulation_Packet
     {
         public EncapsulationCommands Command;
-        public UInt16 Length;
-        public UInt32 Sessionhandle;
+        public ushort Length;
+        public uint Sessionhandle;
         //  Volume 2 : Table 2-3.3 Error Codes - 0x0000 Success, others value error
         public EncapsulationStatus Status = EncapsulationStatus.Invalid_Session_Handle;
         // byte copy of the request into the response
         public byte[] SenderContext = new byte[8];
-        public UInt32 Options;
+        public uint Options;
         // Not used in the EncapsulationPacket receive objects
-        public byte[] Encapsulateddata=null;
+        public byte[] Encapsulateddata = null;
 
         public bool IsOK { get { return Status == EncapsulationStatus.Success; } }
 
-        public Encapsulation_Packet(EncapsulationCommands Command, uint Sessionhandle=0, byte[] Encapsulateddata=null) 
+        public Encapsulation_Packet(EncapsulationCommands Command, uint Sessionhandle = 0, byte[] Encapsulateddata = null)
         {
             this.Command = Command;
             this.Sessionhandle = Sessionhandle;
             this.Encapsulateddata = Encapsulateddata;
             if (Encapsulateddata != null)
-                Length = (UInt16)Encapsulateddata.Length;
+                Length = (ushort)Encapsulateddata.Length;
             else
                 Length = 0;
         }
-    
+
         // From network
         public Encapsulation_Packet(byte[] Packet, ref int Offset, int Length)
         {
-            ushort Cmd=BitConverter.ToUInt16(Packet, Offset);
+            ushort Cmd = BitConverter.ToUInt16(Packet, Offset);
 
-            if (!(Enum.IsDefined(typeof(EncapsulationCommands), Cmd)))
+            if (!Enum.IsDefined(typeof(EncapsulationCommands), Cmd))
             {
                 Status = EncapsulationStatus.Unsupported_Command;
                 return;
@@ -226,18 +227,18 @@ namespace System.Net.EnIPStack
         public byte[] toByteArray(EncapsulationStatus Status = EncapsulationStatus.Success)
         {
             byte[] ret = new byte[24 + Length];
-            
+
             Array.Copy(BitConverter.GetBytes((ushort)Command), 0, ret, 0, 2);
             Array.Copy(BitConverter.GetBytes(Length), 0, ret, 2, 2);
             Array.Copy(BitConverter.GetBytes(Sessionhandle), 0, ret, 4, 4);
             Array.Copy(BitConverter.GetBytes((uint)Status), 0, ret, 8, 4);
             Array.Copy(SenderContext, 0, ret, 12, 8);
             Buffer.BlockCopy(BitConverter.GetBytes(Options), 0, ret, 20, 4);
-            if (Encapsulateddata!=null)
+            if (Encapsulateddata != null)
                 Array.Copy(Encapsulateddata, 0, ret, 24, Encapsulateddata.Length);
             return ret;
         }
-    }   
+    }
 
     // Volume 1 : paragraph 2-4 Message Router Request/Response Formats
     public class UCMM_RR_Packet
@@ -261,8 +262,8 @@ namespace System.Net.EnIPStack
 
         public bool IsOK { get { return GeneralStatus == CIPGeneralSatusCode.Success; } }
 
-        public UCMM_RR_Packet(CIPServiceCodes Service, bool IsRequest, byte[] Path, byte[] Data) 
-        {            
+        public UCMM_RR_Packet(CIPServiceCodes Service, bool IsRequest, byte[] Path, byte[] Data)
+        {
             this.Service = (byte)Service;
             if (!IsRequest)
                 this.Service = (byte)(this.Service | 0x80);
@@ -273,23 +274,23 @@ namespace System.Net.EnIPStack
 
         public bool IsService(CIPServiceCodes Service)
         {
-            byte s=(byte)(this.Service & 0x7F);
+            byte s = (byte)(this.Service & 0x7F);
 
             if (s == (byte)Service) return true;
 
-            if ((this.Service > 0x80 )&& (s==(byte)CIPServiceCodes.UnconnectedSend))
+            if (this.Service > 0x80 && s == (byte)CIPServiceCodes.UnconnectedSend)
                 return true;
-            
+
             return false;
         }
 
-        public bool IsResponse  { get { return Service > 0x80; } }
+        public bool IsResponse { get { return Service > 0x80; } }
         public bool IsQuery { get { return Service < 0x80; } }
 
         // up to now it's only a response paquet decoding
         public UCMM_RR_Packet(byte[] DataArray, ref int Offset, int Lenght)
         {
-            if ((Offset + 20) > Lenght)
+            if (Offset + 20 > Lenght)
                 GeneralStatus = CIPGeneralSatusCode.Not_enough_data;
 
             // Skip 16 bytes of the Command specific data
@@ -308,7 +309,7 @@ namespace System.Net.EnIPStack
             AdditionalStatus_Size = DataArray[Offset];
             Offset += 1;
 
-            if ((Offset + AdditionalStatus_Size *2) > Lenght)
+            if (Offset + AdditionalStatus_Size * 2 > Lenght)
                 GeneralStatus = CIPGeneralSatusCode.Not_enough_data;
 
             if (AdditionalStatus_Size > 0)
@@ -325,7 +326,7 @@ namespace System.Net.EnIPStack
         // up to now it's only a request paquet
         public byte[] toByteArray()
         {
-            if ((Path == null) || ((Path.Length%2)!=0))
+            if (Path == null || Path.Length % 2 != 0)
             {
                 Trace.TraceError("Request_Path is not OK");
                 return null;
@@ -337,33 +338,33 @@ namespace System.Net.EnIPStack
             byte[] retVal = new byte[10 + 6 + DataLength];
             Array.Copy(BitConverter.GetBytes(ItemCount), 0, retVal, 6, 2);
 
-            Array.Copy(BitConverter.GetBytes((ushort)this.IdemId), 0, retVal, 12, 2);
+            Array.Copy(BitConverter.GetBytes((ushort)IdemId), 0, retVal, 12, 2);
 
             Array.Copy(BitConverter.GetBytes(DataLength), 0, retVal, 14, 2);
 
             retVal[16] = Service;
             retVal[17] = (byte)(Path.Length >> 1);
 
-            Array.Copy(Path, 0, retVal, 10+8, Path.Length);
+            Array.Copy(Path, 0, retVal, 10 + 8, Path.Length);
 
             if (Data != null)
                 Array.Copy(Data, 0, retVal, 10 + 8 + Path.Length, Data.Length);
 
             return retVal;
-        }        
+        }
     }
 
     public class ForwardOpen_Config
     {
-        public bool IsO2T=false;
-        public bool O2T_Exculsive=false;
-        public bool O2T_P2P=true;
+        public bool IsO2T = false;
+        public bool O2T_Exculsive = false;
+        public bool O2T_P2P = true;
         /// <summary>
         /// 0=Low; 1=High; 2=Scheduled; 3=Urgent
         /// </summary>
-        public byte O2T_Priority = 0; 
-        public ushort O2T_datasize=0;
-        public uint O2T_RPI=200*1000; // 200 ms
+        public byte O2T_Priority = 0;
+        public ushort O2T_datasize = 0;
+        public uint O2T_RPI = 200 * 1000; // 200 ms
 
         public bool IsT2O = false;
         public bool T2O_Exculsive = false;
@@ -371,9 +372,9 @@ namespace System.Net.EnIPStack
         /// <summary>
         /// 0=Low; 1=High; 2=Scheduled; 3=Urgent
         /// </summary>
-        public byte T2O_Priority = 0; 
-        public ushort T2O_datasize=0;
-        public uint T2O_RPI=200*1000; // 200 ms
+        public byte T2O_Priority = 0;
+        public ushort T2O_datasize = 0;
+        public uint T2O_RPI = 200 * 1000; // 200 ms
 
         public ForwardOpen_Config()
         {
@@ -411,8 +412,8 @@ namespace System.Net.EnIPStack
         // FIXME:
         // I don't understand the usage, with Wago Plc it's not a timeout for the
         // continuous udp flow.
-        public byte Priority_TimeTick=10;
-        public byte Timeout_Ticks=10;
+        public byte Priority_TimeTick = 10;
+        public byte Timeout_Ticks = 10;
 
         private static uint _ConnectionId;
         public uint O2T_ConnectionId;
@@ -429,13 +430,13 @@ namespace System.Net.EnIPStack
         public byte ConnectionTimeoutMultiplier;
         public byte[] Reserved = new byte[3];
         // It's O2T_API for reply, in microseconde
-        public uint O2T_RPI=0;
+        public uint O2T_RPI = 0;
         public uint O2T_ConnectionParameters; // size OK for ForwardOpen & LargeForwardOpen
         // It's T2A_API for reply
         public uint T2O_RPI = 0;
         public uint T2O_ConnectionParameters; // size OK for ForwardOpen & LargeForwardOpen
         // volume 1 : Figure 3-4.2 Transport Class Trigger Attribute
-        public byte TransportTrigger=0x01; // Client class 1, cyclic;
+        public byte TransportTrigger = 0x01; // Client class 1, cyclic;
         public byte Connection_Path_Size;
         public byte[] Connection_Path;
 
@@ -449,7 +450,7 @@ namespace System.Net.EnIPStack
 
             ConnectionSerialNumber = GlobalConnectionSerialNumber++;
 
-            if ((conf.O2T_datasize > 511-2) || (conf.T2O_datasize > 511-6))
+            if (conf.O2T_datasize > 511 - 2 || conf.T2O_datasize > 511 - 6)
                 IsLargeForwardOpen = true;
 
             this.Connection_Path = Connection_Path;
@@ -501,12 +502,12 @@ namespace System.Net.EnIPStack
             {
 
                 O2T_ConnectionParameters = 0x0000; // Fixed Datasize, Variable data size is 0x0200
-                O2T_ConnectionParameters = (uint)(O2T_ConnectionParameters + (conf.O2T_Priority&0x03) << 10);
+                O2T_ConnectionParameters = (uint)(O2T_ConnectionParameters + (conf.O2T_Priority & 0x03) << 10);
                 if (conf.O2T_P2P)
-                    O2T_ConnectionParameters = O2T_ConnectionParameters|0x4000;
+                    O2T_ConnectionParameters = O2T_ConnectionParameters | 0x4000;
                 else
                     O2T_ConnectionParameters = O2T_ConnectionParameters | 0x2000;
-                
+
                 if (conf.O2T_Exculsive)
                     O2T_ConnectionParameters = O2T_ConnectionParameters | 0x8000;
 
@@ -522,7 +523,7 @@ namespace System.Net.EnIPStack
                     if (conf.O2T_datasize != 0)
                         O2T_ConnectionParameters += (ushort)(conf.O2T_datasize + 2 + 4);
                     else
-                        O2T_ConnectionParameters += (ushort)(2);
+                        O2T_ConnectionParameters += 2;
                 }
 
                 O2T_RPI = conf.O2T_RPI;
@@ -531,13 +532,13 @@ namespace System.Net.EnIPStack
         }
         public void SetTriggerType(TransportClassTriggerAttribute type)
         {
-            TransportTrigger = (byte)((TransportTrigger & 0x8F) | (byte)type);
+            TransportTrigger = (byte)(TransportTrigger & 0x8F | (byte)type);
         }
 
         // by now only use for request
         public byte[] toByteArray()
         {
-            int PathSize = Connection_Path.Length / 2 + (Connection_Path.Length % 2);
+            int PathSize = Connection_Path.Length / 2 + Connection_Path.Length % 2;
             Connection_Path_Size = (byte)PathSize;
             int shift = 0; // ForwardOpen or LargeForwardOpen
 
@@ -618,7 +619,7 @@ namespace System.Net.EnIPStack
     {
         // SequencedAddress
         public ushort TypeId;
-        public ushort Lenght=8;
+        public ushort Lenght = 8;
         public uint ConnectionId;
         public uint SequenceNumber;
         // Connected or Unconnected Data Item
@@ -628,7 +629,7 @@ namespace System.Net.EnIPStack
 
         public byte[] data;
 
-        public SequencedAddressItem(uint ConnectionId=0, uint SequenceNumber=0, byte[] data=null)
+        public SequencedAddressItem(uint ConnectionId = 0, uint SequenceNumber = 0, byte[] data = null)
         {
             this.ConnectionId = ConnectionId;
             this.SequenceNumber = SequenceNumber;
@@ -639,7 +640,7 @@ namespace System.Net.EnIPStack
         {
             // Itemcount=2, by now, could change maybe in this code !
             Offset += 2;
-            TypeId=BitConverter.ToUInt16(DataArray, Offset);
+            TypeId = BitConverter.ToUInt16(DataArray, Offset);
             if (TypeId != (ushort)CommonPacketItemIdNumbers.SequencedAddressItem) return;
             Offset += 4;
             ConnectionId = BitConverter.ToUInt32(DataArray, Offset);
@@ -648,14 +649,14 @@ namespace System.Net.EnIPStack
             Offset += 4;
 
             TypeId2 = BitConverter.ToUInt16(DataArray, Offset);
-            if ((TypeId2 != (ushort)CommonPacketItemIdNumbers.ConnectedDataItem) &&
-                (TypeId2 != (ushort)CommonPacketItemIdNumbers.UnConnectedDataItem)) return;
+            if (TypeId2 != (ushort)CommonPacketItemIdNumbers.ConnectedDataItem &&
+                TypeId2 != (ushort)CommonPacketItemIdNumbers.UnConnectedDataItem) return;
 
             Offset += 2;
-            Lenght2 = BitConverter.ToUInt16(DataArray, Offset);            
+            Lenght2 = BitConverter.ToUInt16(DataArray, Offset);
             Offset += 2;
 
-            if ((Lenght2 + Offset) != Lenght)
+            if (Lenght2 + Offset != Lenght)
             {
                 TypeId = 0; // invalidate the frame
                 return;
@@ -669,11 +670,11 @@ namespace System.Net.EnIPStack
             // Offset is now at the beginning of the raw data
         }
 
-        public byte[] toByteArray(byte[] newdata=null)
-        {           
+        public byte[] toByteArray(byte[] newdata = null)
+        {
             byte[] retVal;
 
-            if (newdata != null) data = newdata;    
+            if (newdata != null) data = newdata;
 
             if (data == null)
             {
@@ -709,7 +710,7 @@ namespace System.Net.EnIPStack
             return retVal;
         }
 
-        public bool IsOK { get { return ((TypeId == 0x8002) && (TypeId2 == 0x00b1)); } }
+        public bool IsOK { get { return TypeId == 0x8002 && TypeId2 == 0x00b1; } }
     }
 
     // Volume 2 : 2-6.3.3 Sockaddr Info Item
@@ -722,22 +723,22 @@ namespace System.Net.EnIPStack
 
         // Too small for IPV6 !
         // public byte[] sin_zero = new byte[8];
-        
+
         public EnIPSocketAddress(IPEndPoint ep)
         {
             sin_family = (short)ep.AddressFamily;
             sin_port = (ushort)ep.Port;
-            sin_addr = BitConverter.ToUInt32(ep.Address.GetAddressBytes(),0);
+            sin_addr = BitConverter.ToUInt32(ep.Address.GetAddressBytes(), 0);
         }
         public EnIPSocketAddress(byte[] DataArray, ref int Offset)
         {
             sin_family = (short)((DataArray[0 + Offset] << 8) + DataArray[1 + Offset]);
             sin_port = (ushort)((DataArray[2 + Offset] << 8) + DataArray[3 + Offset]);
-            sin_addr = (uint)((DataArray[7 + Offset] << 24) + (DataArray[6 + Offset] << 16) 
+            sin_addr = (uint)((DataArray[7 + Offset] << 24) + (DataArray[6 + Offset] << 16)
                             + (DataArray[5 + Offset] << 8) + DataArray[4 + Offset]);
             Offset += 16;
         }
-
+        public EnIPSocketAddress() { }
         public IPEndPoint toIPEndpoint()
         {
             IPEndPoint ep = new IPEndPoint(new IPAddress(sin_addr), sin_port);
@@ -749,7 +750,7 @@ namespace System.Net.EnIPStack
             byte[] retVal;
 
             retVal = new byte[16];
-           
+
 
             retVal[0] = (byte)(sin_family >> 8);
             retVal[1] = (byte)(sin_family & 0xFF);

@@ -32,7 +32,7 @@ using System.Net;
 using System.Diagnostics;
 using System.Threading;
 
-namespace System.Net.EnIPStack
+namespace LibEthernetIPStack
 {
     public delegate void EncapMessageReceivedHandler(object sender, byte[] packet, Encapsulation_Packet EncapPacket, int offset, int msg_length, IPEndPoint remote_address);
     public delegate void ItemMessageReceivedHandler(object sender, byte[] packet, SequencedAddressItem ItemPacket, int offset, int msg_length, IPEndPoint remote_address);
@@ -46,9 +46,9 @@ namespace System.Net.EnIPStack
 
         private UdpClient m_exclusive_conn;
 
-        public EnIPUDPTransport(String Local_IP, int Port)
+        public EnIPUDPTransport(string Local_IP, int Port)
         {
-            System.Net.EndPoint ep = new IPEndPoint(System.Net.IPAddress.Any, Port);
+            EndPoint ep = new IPEndPoint(IPAddress.Any, Port);
             if (!string.IsNullOrEmpty(Local_IP)) ep = new IPEndPoint(IPAddress.Parse(Local_IP), Port);
 
             m_exclusive_conn = new UdpClient(AddressFamily.InterNetwork);
@@ -60,21 +60,21 @@ namespace System.Net.EnIPStack
             m_exclusive_conn.BeginReceive(OnReceiveData, m_exclusive_conn);
         }
 
-        public void JoinMulticastGroup(String IPMulti)
+        public void JoinMulticastGroup(string IPMulti)
         {
             try
             {
                 m_exclusive_conn.JoinMulticastGroup(IPAddress.Parse(IPMulti));
             }
-            catch {}
+            catch { }
         }
 
         private void OnReceiveData(IAsyncResult asyncResult)
         {
-            System.Net.Sockets.UdpClient conn = (System.Net.Sockets.UdpClient)asyncResult.AsyncState;
+            UdpClient conn = (UdpClient)asyncResult.AsyncState;
             try
             {
-                System.Net.IPEndPoint ep = new IPEndPoint(System.Net.IPAddress.Any, 0);
+                IPEndPoint ep = new IPEndPoint(IPAddress.Any, 0);
                 byte[] local_buffer;
                 int rx = 0;
 
@@ -89,14 +89,14 @@ namespace System.Net.EnIPStack
                     conn.BeginReceive(OnReceiveData, conn);
                     return;
                 }
-                
-                if (rx <14)    // Sure it's too small
+
+                if (rx < 14)    // Sure it's too small
                 {
                     //restart data receive
                     conn.BeginReceive(OnReceiveData, conn);
                     return;
                 }
-                
+
                 try
                 {
                     int Offset = 0;
@@ -110,7 +110,7 @@ namespace System.Net.EnIPStack
                     else
                     {
                         SequencedAddressItem Itempacket = new SequencedAddressItem(local_buffer, ref Offset, rx);
-                        if (Itempacket.IsOK&&(ItemMessageReceived != null))
+                        if (Itempacket.IsOK && ItemMessageReceived != null)
                             ItemMessageReceived(this, local_buffer, Itempacket, Offset, rx, ep);
                     }
                 }
@@ -137,16 +137,16 @@ namespace System.Net.EnIPStack
 
         public void Send(Encapsulation_Packet Packet, IPEndPoint ep)
         {
-            byte[] b=Packet.toByteArray();
+            byte[] b = Packet.toByteArray();
             m_exclusive_conn.Send(b, b.Length, ep);
         }
 
         public void Send(SequencedAddressItem Packet, IPEndPoint ep)
         {
-            byte[] b=Packet.toByteArray();
+            byte[] b = Packet.toByteArray();
             m_exclusive_conn.Send(b, b.Length, ep);
         }
-        
+
         // A lot of problems on Mono (Raspberry) to get the correct broadcast @
         // so this method is overridable (this allows the implementation of operating system specific code)
         // Marc solution http://stackoverflow.com/questions/8119414/how-to-query-the-subnet-masks-using-mono-on-linux for instance
@@ -154,7 +154,7 @@ namespace System.Net.EnIPStack
         protected virtual IPEndPoint _GetBroadcastAddress()
         {
             // general broadcast
-            System.Net.IPEndPoint ep = new IPEndPoint(System.Net.IPAddress.Parse("255.255.255.255"), 0xAF12);
+            IPEndPoint ep = new IPEndPoint(IPAddress.Parse("255.255.255.255"), 0xAF12);
             // restricted local broadcast (directed ... routable)
             foreach (System.Net.NetworkInformation.NetworkInterface adapter in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
                 foreach (System.Net.NetworkInformation.UnicastIPAddressInformation ip in adapter.GetIPProperties().UnicastAddresses)
@@ -170,7 +170,7 @@ namespace System.Net.EnIPStack
                                 BroadcastStr.Append(((byte)(int.Parse(strCurrentIP[i]) | ~int.Parse(strIPNetMask[i]))).ToString());
                                 if (i != 3) BroadcastStr.Append('.');
                             }
-                            ep = new IPEndPoint(System.Net.IPAddress.Parse(BroadcastStr.ToString()), 0xAF12);
+                            ep = new IPEndPoint(IPAddress.Parse(BroadcastStr.ToString()), 0xAF12);
                         }
                         catch { }  //On mono IPv4Mask feature not implemented
                     }
@@ -224,7 +224,7 @@ namespace System.Net.EnIPStack
             try
             {
                 Tcpclient = new TcpClient();
-                Tcpclient.ReceiveTimeout = this.Timeout;
+                Tcpclient.ReceiveTimeout = Timeout;
 
                 SocketAsyncEventArgs AsynchEvent = new SocketAsyncEventArgs();
                 AsynchEvent.RemoteEndPoint = ep;
@@ -259,7 +259,7 @@ namespace System.Net.EnIPStack
         public int SendReceive(Encapsulation_Packet SendPkt, out Encapsulation_Packet ReceivePkt, out int Offset, ref byte[] packet)
         {
             ReceivePkt = null;
-            Offset=0;
+            Offset = 0;
 
             int Lenght = 0;
             try
@@ -267,14 +267,14 @@ namespace System.Net.EnIPStack
                 // We are not working on a continous flow but with query/response datagram
                 // So if something is here it's a previous lost (timeout) response packet
                 // Flush all content.
-                 while (Tcpclient.Available!=0) 
-                     Tcpclient.Client.Receive(packet);
+                while (Tcpclient.Available != 0)
+                    Tcpclient.Client.Receive(packet);
 
                 Tcpclient.Client.Send(SendPkt.toByteArray());
                 Lenght = Tcpclient.Client.Receive(packet);
                 if (Lenght > 24)
                     ReceivePkt = new Encapsulation_Packet(packet, ref Offset, Lenght);
-                if (Lenght ==0)
+                if (Lenght == 0)
                     Trace.WriteLine("Reception timeout with " + Tcpclient.Client.RemoteEndPoint.ToString());
             }
             catch
@@ -309,7 +309,7 @@ namespace System.Net.EnIPStack
 
         public EnIPTCPServerTransport()
         {
-            this.tcpListener = new TcpListener(IPAddress.Any, 0xAF12);
+            tcpListener = new TcpListener(IPAddress.Any, 0xAF12);
             Thread listenThread = new Thread(ListenForClients);
             listenThread.IsBackground = true;
             listenThread.Start();
@@ -319,12 +319,12 @@ namespace System.Net.EnIPStack
         {
             try
             {
-                this.tcpListener.Start();
+                tcpListener.Start();
 
                 for (; ; )
                 {
                     // Blocking
-                    TcpClient client = this.tcpListener.AcceptTcpClient();
+                    TcpClient client = tcpListener.AcceptTcpClient();
                     Trace.WriteLine("Arrival of " + ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString());
 
                     ClientsList.Add(client);
@@ -335,7 +335,7 @@ namespace System.Net.EnIPStack
                     clientThread.Start(client);
                 }
             }
-            catch 
+            catch
             {
                 Trace.TraceError("Fatal Error in Tcp Listener Thread");
             }
@@ -343,7 +343,7 @@ namespace System.Net.EnIPStack
 
         public bool Send(byte[] packet, int size, IPEndPoint ep)
         {
-            TcpClient tcpClient=ClientsList.Find((o) => ((IPEndPoint)(o.Client.RemoteEndPoint)).Equals(ep));
+            TcpClient tcpClient = ClientsList.Find((o) => ((IPEndPoint)o.Client.RemoteEndPoint).Equals(ep));
 
             if (tcpClient == null) return false;
 

@@ -23,7 +23,7 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 *********************************************************************/
-namespace System.Net.EnIPStack
+namespace LibEthernetIPStack
 {
     // Volume 2 : Table 2-3.2 Encapsulation Commands
     public enum EncapsulationCommands : ushort
@@ -54,7 +54,7 @@ namespace System.Net.EnIPStack
         // Exceptionnel
         // There is no protocol version id in the header !!!
         // Information available only in ListInfo fields (upper protocol)
-        Unsupported_Protocol_Revision= 0x000000069
+        Unsupported_Protocol_Revision = 0x000000069
     }
 
     // Volume 1 : Table 5-1.1 Object Specifications
@@ -154,7 +154,7 @@ namespace System.Net.EnIPStack
         GroupSync = 0x1C,
         ForwardClose = 0x4E,
         UnconnectedSend = 0x52,
-        ForwardOpen = 0x54,  
+        ForwardOpen = 0x54,
         LargeForwardOpen = 0x5B
 
     }

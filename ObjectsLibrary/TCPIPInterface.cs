@@ -28,8 +28,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.ComponentModel;
+using LibEthernetIPStack;
 
-namespace System.Net.EnIPStack.ObjectsLibrary
+namespace LibEthernetIPStack.ObjectsLibrary
 {
     // CIP_TCPIPInterface_class not required, nothing new than in CIPObjectBaseClass
 
@@ -50,31 +51,31 @@ namespace System.Net.EnIPStack.ObjectsLibrary
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public class TCPIPMcastConfig
         {
-            public Byte? Alloc_Control { get; set; }
-            public Byte? Reserved { get; set; }
-            public UInt16? Num_Mcast { get; set; }
-            public String Mcast_Start_Addr { get; set; }
+            public byte? Alloc_Control { get; set; }
+            public byte? Reserved { get; set; }
+            public ushort? Num_Mcast { get; set; }
+            public string Mcast_Start_Addr { get; set; }
             public override string ToString() { return ""; }
         }
 
         [CIPAttributId(1)]
-        public UInt32? Status { get; set; }
+        public uint? Status { get; set; }
         [CIPAttributId(2)]
-        public UInt32? Configuration_Capability { get; set; }
+        public uint? Configuration_Capability { get; set; }
         [CIPAttributId(3)]
-        public UInt32? Configuration_Control { get; set; }
+        public uint? Configuration_Control { get; set; }
         [CIPAttributId(4)]
-        public UInt16? Path_Size { get; set; }
+        public ushort? Path_Size { get; set; }
         [CIPAttributId(4)]
         public string PhysicalObjectLinkPath { get; set; }
         [CIPAttributId(5)]
-        public TCPIPInterface_Configuration Interface_Configuration { get; set; }       
+        public TCPIPInterface_Configuration Interface_Configuration { get; set; }
         [CIPAttributId(6)]
         public string Host_Name { get; set; }
         [CIPAttributId(7)]
-        public Byte[] Safety_Network_Number { get; set; }
+        public byte[] Safety_Network_Number { get; set; }
         [CIPAttributId(8)]
-        public Byte? TTL_Value { get; set; }
+        public byte? TTL_Value { get; set; }
         [CIPAttributId(9)]
         public TCPIPMcastConfig Mcast_Config { get; set; }
 
@@ -121,11 +122,11 @@ namespace System.Net.EnIPStack.ObjectsLibrary
                         Name_Server_2 = GetIPAddress(ref Idx, b).ToString(),
                         Domain_Name = GetString(ref Idx, b)
                     };
-                    if ((Interface_Configuration.Domain_Name.Length % 2) != 0) Idx++; // padd to even number of characters
+                    if (Interface_Configuration.Domain_Name.Length % 2 != 0) Idx++; // padd to even number of characters
                     return true;
                 case 6:
                     Host_Name = GetString(ref Idx, b);
-                    if ((Host_Name.Length % 2) != 0) Idx++; // padd to even number of characters
+                    if (Host_Name.Length % 2 != 0) Idx++; // padd to even number of characters
                     return true;
                 case 7:
                     if (b.Length >= Idx + 5)

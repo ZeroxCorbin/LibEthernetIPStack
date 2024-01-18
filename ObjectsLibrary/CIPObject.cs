@@ -29,10 +29,11 @@ using System.Linq;
 using System.Text;
 using System.ComponentModel;
 using System.Net.NetworkInformation;
+using System.Net;
 
-namespace System.Net.EnIPStack.ObjectsLibrary
+namespace LibEthernetIPStack.ObjectsLibrary
 {
-    public class CIPAttributId:Attribute
+    public class CIPAttributId : Attribute
     {
         public int Id;
         public CIPAttributId(int Id) { this.Id = Id; }
@@ -44,7 +45,7 @@ namespace System.Net.EnIPStack.ObjectsLibrary
     {
         public byte[] Remain_Undecoded_Bytes { get; set; } // if name changes, remember to modify GetProperties method also !
 
-        protected int FilteredAttribut=-1;
+        protected int FilteredAttribut = -1;
         protected int AttIdMax;
 
         public void FilterAttribut(int AttId) { FilteredAttribut = AttId; }
@@ -56,7 +57,7 @@ namespace System.Net.EnIPStack.ObjectsLibrary
         {
             int Idx = 0;
 
-            for (int i = 1; i < AttIdMax+1; i++)
+            for (int i = 1; i < AttIdMax + 1; i++)
                 DecodeAttr(i, ref Idx, b);
 
             if (Idx < b.Length)
@@ -82,8 +83,8 @@ namespace System.Net.EnIPStack.ObjectsLibrary
         public bool? Getbool(ref int Idx, byte[] buf)
         {
             if (buf.Length < Idx) return null;
-            var ret = (buf[Idx] == 1);
-            Idx+=1;
+            var ret = buf[Idx] == 1;
+            Idx += 1;
             return ret;
         }
         public void Setbool(ref int Idx, byte[] buf, bool? val)
@@ -100,45 +101,45 @@ namespace System.Net.EnIPStack.ObjectsLibrary
             return ret;
         }
         public void Setbyte(ref int Idx, byte[] buf, byte? val)
-        { 
+        {
             if (val == null) return;
             Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 1);
             Idx++;
         }
-        public UInt16? GetUInt16(ref int Idx, byte[] buf)
+        public ushort? GetUInt16(ref int Idx, byte[] buf)
         {
             if (buf.Length < Idx + 1) return null;
             var ret = BitConverter.ToUInt16(buf, Idx);
-            Idx+=2;
+            Idx += 2;
             return ret;
         }
-        public void SetUInt16(ref int Idx, byte[] buf, UInt16? val)
+        public void SetUInt16(ref int Idx, byte[] buf, ushort? val)
         {
             if (val == null) return;
             Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 2);
-            Idx+=2;
+            Idx += 2;
         }
-        public UInt32? GetUInt32(ref int Idx, byte[] buf)
+        public uint? GetUInt32(ref int Idx, byte[] buf)
         {
             if (buf.Length < Idx + 3) return null;
             var ret = BitConverter.ToUInt32(buf, Idx);
             Idx += 4;
             return ret;
         }
-        public void SetUInt32(ref int Idx, byte[] buf, UInt32? val)
+        public void SetUInt32(ref int Idx, byte[] buf, uint? val)
         {
             if (val == null) return;
             Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 4);
             Idx += 4;
         }
-        public UInt64? GetUInt64(ref int Idx, byte[] buf)
+        public ulong? GetUInt64(ref int Idx, byte[] buf)
         {
             if (buf.Length < Idx + 7) return null;
             var ret = BitConverter.ToUInt64(buf, Idx);
             Idx += 8;
             return ret;
         }
-        public void SetUInt64(ref int Idx, byte[] buf, UInt64? val)
+        public void SetUInt64(ref int Idx, byte[] buf, ulong? val)
         {
             if (val == null) return;
             Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 8);
@@ -147,7 +148,7 @@ namespace System.Net.EnIPStack.ObjectsLibrary
         public sbyte? Getsbyte(ref int Idx, byte[] buf)
         {
             if (buf.Length < Idx) return null;
-            var ret = (sbyte) buf[Idx];
+            var ret = (sbyte)buf[Idx];
             Idx += 1;
             return ret;
         }
@@ -157,101 +158,101 @@ namespace System.Net.EnIPStack.ObjectsLibrary
             Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 1);
             Idx++;
         }
-        public Int16? GetInt16(ref int Idx, byte[] buf)
+        public short? GetInt16(ref int Idx, byte[] buf)
         {
             if (buf.Length < Idx + 1) return null;
             var ret = BitConverter.ToInt16(buf, Idx);
             Idx += 2;
             return ret;
         }
-        public void SetInt16(ref int Idx, byte[] buf, Int16? val)
+        public void SetInt16(ref int Idx, byte[] buf, short? val)
         {
             if (val == null) return;
             Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 2);
             Idx += 2;
         }
-        public Int32? GetInt32(ref int Idx, byte[] buf)
+        public int? GetInt32(ref int Idx, byte[] buf)
         {
             if (buf.Length < Idx + 3) return null;
             var ret = BitConverter.ToInt32(buf, Idx);
             Idx += 4;
             return ret;
         }
-        public void SetInt32(ref int Idx, byte[] buf, Int32? val)
+        public void SetInt32(ref int Idx, byte[] buf, int? val)
         {
             if (val == null) return;
             Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 4);
             Idx += 4;
         }
-        public Int64? GetInt64(ref int Idx, byte[] buf)
+        public long? GetInt64(ref int Idx, byte[] buf)
         {
             if (buf.Length < Idx + 7) return null;
             var ret = BitConverter.ToInt64(buf, Idx);
             Idx += 8;
             return ret;
         }
-        public void SetInt64(ref int Idx, byte[] buf, Int64? val)
+        public void SetInt64(ref int Idx, byte[] buf, long? val)
         {
             if (val == null) return;
             Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 8);
             Idx += 8;
         }
 
-        public Single? GetSingle(ref int Idx, byte[] buf)
+        public float? GetSingle(ref int Idx, byte[] buf)
         {
             if (buf.Length < Idx + 3) return null;
             var ret = BitConverter.ToSingle(buf, Idx);
             Idx += 4;
             return ret;
         }
-        public void SetSingle(ref int Idx, byte[] buf, Single? val)
+        public void SetSingle(ref int Idx, byte[] buf, float? val)
         {
             if (val == null) return;
             Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 4);
             Idx += 4;
         }
-        public Double? GetDouble(ref int Idx, byte[] buf)
+        public double? GetDouble(ref int Idx, byte[] buf)
         {
             if (buf.Length < Idx + 7) return null;
             var ret = BitConverter.ToDouble(buf, Idx);
             Idx += 8;
             return ret;
         }
-        public void SetDouble(ref int Idx, byte[] buf, Double? val)
+        public void SetDouble(ref int Idx, byte[] buf, double? val)
         {
             if (val == null) return;
             Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 8);
             Idx += 8;
         }
-        public String GetString(ref int Idx, byte[] buf)
+        public string GetString(ref int Idx, byte[] buf)
         {
-            UInt16? t = GetUInt16(ref Idx, buf);
-            if ((t != null) && (buf.Length >= Idx + t.Value))
+            ushort? t = GetUInt16(ref Idx, buf);
+            if (t != null && buf.Length >= Idx + t.Value)
             {
                 Encoding iso = Encoding.GetEncoding("ISO-8859-1");
-                String s=iso.GetString(buf, Idx, t.Value);
+                string s = iso.GetString(buf, Idx, t.Value);
                 Idx += t.Value;
                 return s;
             }
             return null;
         }
-        public void SetString(ref int Idx, byte[] buf, String val)
+        public void SetString(ref int Idx, byte[] buf, string val)
         {
             throw new Exception();// Not working todaty : buf size change could occure
         }
-        public String GetShortString(ref int Idx, byte[] buf)
+        public string GetShortString(ref int Idx, byte[] buf)
         {
-            Byte? t = Getbyte(ref Idx, buf);
-            if ((t != null) && (buf.Length >= Idx + t.Value))
+            byte? t = Getbyte(ref Idx, buf);
+            if (t != null && buf.Length >= Idx + t.Value)
             {
                 Encoding iso = Encoding.GetEncoding("ISO-8859-1");
-                String s = iso.GetString(buf, Idx, t.Value);
+                string s = iso.GetString(buf, Idx, t.Value);
                 Idx += t.Value;
                 return s;
             }
             return null;
         }
-        public void SetShortString(ref int Idx, byte[] buf, String val)
+        public void SetShortString(ref int Idx, byte[] buf, string val)
         {
             throw new Exception(); // Not working todaty : buf size change could occure
         }
@@ -275,8 +276,8 @@ namespace System.Net.EnIPStack.ObjectsLibrary
             Idx += 6;
             //Array.Reverse(b_ip);
             return new PhysicalAddress(b_eth);
-    }
-        
+        }
+
         #region CustomTypeDescriptor
         public AttributeCollection GetAttributes()
         {
@@ -336,7 +337,7 @@ namespace System.Net.EnIPStack.ObjectsLibrary
 
             // For CIP Attribut we get the class and hides all attributs with
             // the wrong Id
-            PropertyDescriptor Remain_Undecoded_Bytes_Prop=null;
+            PropertyDescriptor Remain_Undecoded_Bytes_Prop = null;
             if (FilteredAttribut == -1)
             {
                 // Reorder the list to shows Remain_Undecoded_Bytes at the last index
@@ -346,7 +347,7 @@ namespace System.Net.EnIPStack.ObjectsLibrary
                     if (p.Name == "Remain_Undecoded_Bytes")
                         Remain_Undecoded_Bytes_Prop = p;
                     else
-                        reordered[i++]=p;
+                        reordered[i++] = p;
                 reordered[i] = Remain_Undecoded_Bytes_Prop;
 
                 return new PropertyDescriptorCollection(reordered);
@@ -374,7 +375,7 @@ namespace System.Net.EnIPStack.ObjectsLibrary
             return this;
         }
         #endregion
-        
+
     }
 
 }

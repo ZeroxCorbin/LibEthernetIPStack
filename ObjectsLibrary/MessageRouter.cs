@@ -23,13 +23,12 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 *********************************************************************/
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.ComponentModel;
 
-namespace System.Net.EnIPStack.ObjectsLibrary
+namespace LibEthernetIPStack.ObjectsLibrary
 {
     // CIP_MessageRouter_class not required, nothing new than in CIPObjectBaseClass
 
@@ -38,19 +37,19 @@ namespace System.Net.EnIPStack.ObjectsLibrary
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public class MessageRouterObjectList
         {
-            public UInt16? Number  { get; set; }
-            public UInt16[] ClassesId { get; set; }
+            public ushort? Number { get; set; }
+            public ushort[] ClassesId { get; set; }
             public override string ToString() { return ""; }
         }
 
         [CIPAttributId(1)]
         public MessageRouterObjectList SupportedObjects { get; set; }
         [CIPAttributId(2)]
-        public UInt16? MaxConnectionsSupported { get; set; }
+        public ushort? MaxConnectionsSupported { get; set; }
         [CIPAttributId(3)]
-        public UInt16? NumberOfCurrentConnections { get; set; }
+        public ushort? NumberOfCurrentConnections { get; set; }
         [CIPAttributId(4)]
-        public UInt16[] ActiveConnections { get; set; }
+        public ushort[] ActiveConnections { get; set; }
 
         public CIP_MessageRouter_instance() { AttIdMax = 4; }
 
@@ -68,10 +67,10 @@ namespace System.Net.EnIPStack.ObjectsLibrary
             {
                 case 1:
                     SupportedObjects = new MessageRouterObjectList();
-                    SupportedObjects.Number=GetUInt16(ref Idx, b);
+                    SupportedObjects.Number = GetUInt16(ref Idx, b);
                     SupportedObjects.ClassesId = new ushort[SupportedObjects.Number.Value];
-                    for (int i = 0; i < SupportedObjects.Number.Value;i++ )
-                        SupportedObjects.ClassesId[i] = GetUInt16(ref Idx, b).Value;                    
+                    for (int i = 0; i < SupportedObjects.Number.Value; i++)
+                        SupportedObjects.ClassesId[i] = GetUInt16(ref Idx, b).Value;
 
                     return true;
                 case 2:
@@ -83,7 +82,7 @@ namespace System.Net.EnIPStack.ObjectsLibrary
                 case 4:
                     if (NumberOfCurrentConnections == null) return false;
 
-                    ActiveConnections = new UInt16[NumberOfCurrentConnections.Value];
+                    ActiveConnections = new ushort[NumberOfCurrentConnections.Value];
                     for (int i = 0; i < ActiveConnections.Length; i++)
                     {
                         ActiveConnections[i] = GetUInt16(ref Idx, b).Value;

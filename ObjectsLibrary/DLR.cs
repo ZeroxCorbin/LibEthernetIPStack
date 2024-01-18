@@ -23,12 +23,11 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 *********************************************************************/
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace System.Net.EnIPStack.ObjectsLibrary
+namespace LibEthernetIPStack.ObjectsLibrary
 {
 
     // CIP_DLR_class not required, nothing new than in CIPObjectBaseClass
@@ -36,7 +35,7 @@ namespace System.Net.EnIPStack.ObjectsLibrary
     public class CIP_DLR_instance : CIPObject
     {
         [CIPAttributId(1)]
-        public byte? Network_Topology  { get; set; }
+        public byte? Network_Topology { get; set; }
         [CIPAttributId(2)]
         public byte? Network_Status { get; set; }
         [CIPAttributId(3)]
@@ -44,7 +43,7 @@ namespace System.Net.EnIPStack.ObjectsLibrary
         [CIPAttributId(4)]
         public string Active_Supervisor_PhysicalAddress { get; set; }
         [CIPAttributId(5)]
-        public UInt32? Capability_Flag { get; set; }
+        public uint? Capability_Flag { get; set; }
 
         public CIP_DLR_instance() { AttIdMax = 5; }
 
