@@ -717,12 +717,12 @@ namespace LibEthernetIPStack
     public class EnIPSocketAddress
     {
 
-        public short sin_family;
-        public ushort sin_port;
-        public uint sin_addr;
+        public short sin_family { get; set; }
+        public ushort sin_port { get; set; }
+        public uint sin_addr { get; set; }
 
         // Too small for IPV6 !
-        // public byte[] sin_zero = new byte[8];
+        //public byte[] sin_zero = new byte[8];
 
         public EnIPSocketAddress(IPEndPoint ep)
         {

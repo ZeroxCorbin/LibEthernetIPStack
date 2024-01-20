@@ -32,6 +32,7 @@ using System.Reflection;
 using System.IO;
 using Newtonsoft.Json;
 using LibEthernetIPStack.ObjectsLibrary;
+using System.Linq;
 
 namespace LibEthernetIPStack
 {
@@ -96,17 +97,12 @@ namespace LibEthernetIPStack
         // get set are used by the property grid in EnIPExplorer
         public ushort DataLength;
         public ushort EncapsulationVersion { get; set; }
+        public string IPAddress => new IPAddress(SocketAddress.sin_addr).ToString();
         public EnIPSocketAddress SocketAddress { get; set; }
-        public short sin_family => SocketAddress.sin_family;
-        public ushort sin_port => SocketAddress.sin_port;
-        public uint sin_addr => SocketAddress.sin_addr;
-        public string sin_addr_str => Helpers.UInt32ToIPAddress(sin_addr).ToString();
         public ushort VendorId { get; set; }
         public ushort DeviceType { get; set; }
         public ushort ProductCode { get; set; }
-        public string Revision { get { return _Revision[0].ToString() + "." + _Revision[1].ToString(); } set { } }
-        [JsonIgnore]
-        public byte[] _Revision = new byte[2];
+        public List<byte> Revision { get; set; } = new List<byte>();
         public short Status { get; set; }
         public uint SerialNumber { get; set; }
         public string ProductName { get; set; }
@@ -160,10 +156,10 @@ namespace LibEthernetIPStack
             ProductCode = BitConverter.ToUInt16(DataArray, Offset);
             Offset += 2;
 
-            _Revision[0] = DataArray[Offset];
+            Revision.Add(DataArray[Offset]);
             Offset++;
 
-            _Revision[1] = DataArray[Offset];
+            Revision.Add(DataArray[Offset]);
             Offset++;
 
             Status = BitConverter.ToInt16(DataArray, Offset);
@@ -249,7 +245,7 @@ namespace LibEthernetIPStack
             VendorId = newset.VendorId;
             DeviceType = newset.DeviceType;
             ProductCode = newset.ProductCode;
-            _Revision = newset._Revision;
+            Revision = newset.Revision;
             Status = newset.Status;
             SerialNumber = newset.SerialNumber;
             ProductName = newset.ProductName;
