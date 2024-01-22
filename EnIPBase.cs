@@ -168,19 +168,20 @@ namespace LibEthernetIPStack
     // No explicit information to distinguish between a request and a reply
     public class Encapsulation_Packet
     {
-        public EncapsulationCommands Command;
-        public ushort Length;
-        public uint Sessionhandle;
+        public EncapsulationCommands Command { get; set; }
+        public ushort Length { get; set; }
+        public uint Sessionhandle { get; set; }
         //  Volume 2 : Table 2-3.3 Error Codes - 0x0000 Success, others value error
-        public EncapsulationStatus Status = EncapsulationStatus.Invalid_Session_Handle;
+        public EncapsulationStatus Status { get; } = EncapsulationStatus.Invalid_Session_Handle;
         // byte copy of the request into the response
-        public byte[] SenderContext = new byte[8];
-        public uint Options;
+        public byte[] SenderContext { get; set; } = new byte[8];
+        public uint Options { get; set; }
         // Not used in the EncapsulationPacket receive objects
-        public byte[] Encapsulateddata = null;
+        public byte[] Encapsulateddata { get; set; } = null;
 
         public bool IsOK { get { return Status == EncapsulationStatus.Success; } }
 
+        public Encapsulation_Packet() { }
         public Encapsulation_Packet(EncapsulationCommands Command, uint Sessionhandle = 0, byte[] Encapsulateddata = null)
         {
             this.Command = Command;

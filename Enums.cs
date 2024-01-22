@@ -23,8 +23,12 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 *********************************************************************/
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
 namespace LibEthernetIPStack
 {
+    [JsonConverter(typeof(StringEnumConverter))]
     // Volume 2 : Table 2-3.2 Encapsulation Commands
     public enum EncapsulationCommands : ushort
     {
@@ -43,6 +47,7 @@ namespace LibEthernetIPStack
     // Volume 2 : Table 2-3.3 Error Codes
     // Another time these documents are a bag of shit
     // this table shows 16 bits status
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum EncapsulationStatus : uint
     {
         Success = 0x00000000,
@@ -57,6 +62,7 @@ namespace LibEthernetIPStack
         Unsupported_Protocol_Revision = 0x000000069
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
     // Volume 1 : Table 5-1.1 Object Specifications
     public enum CIPObjectLibrary : ushort
     {
@@ -126,6 +132,7 @@ namespace LibEthernetIPStack
         CompoNetRepeater = 0xF8
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
     // Volume 1 : Table A-3.1 CIP Service Codes and Names
     // High bit 0 for query, 1 for response
     public enum CIPServiceCodes
@@ -159,6 +166,7 @@ namespace LibEthernetIPStack
 
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
     // Volume 1 : Table 5-2.2 Identity Object Instance Attributes 
     public enum IdentityObjectState
     {
@@ -171,6 +179,7 @@ namespace LibEthernetIPStack
         Default = 255
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
     // Volume 1 : Table B-1.1 CIP General Status Codes
     public enum CIPGeneralSatusCode : byte
     {
@@ -221,6 +230,7 @@ namespace LibEthernetIPStack
         Attribute_not_gettable = 44
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
     // Volume 2 : Table 2-6.3 Item ID Numbers
     public enum CommonPacketItemIdNumbers : ushort
     {
@@ -235,6 +245,7 @@ namespace LibEthernetIPStack
         SequencedAddressItem = 0x8002
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
     // Volume 1 : Figure 3-4.2 Transport Class Trigger Attribute
     public enum TransportClassTriggerAttribute : byte
     {
@@ -243,6 +254,7 @@ namespace LibEthernetIPStack
         ApplicationObject = 0x20
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
     //Volume 1 :Table C-6.1 Identification Codes and Descriptions of Elementary Data Types
     public enum CIPType : byte
     {

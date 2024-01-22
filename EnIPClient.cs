@@ -33,11 +33,13 @@ using System.IO;
 using Newtonsoft.Json;
 using LibEthernetIPStack.ObjectsLibrary;
 using System.Linq;
+using Newtonsoft.Json.Converters;
 
 namespace LibEthernetIPStack
 {
     public delegate void DeviceArrivalHandler(EnIPRemoteDevice device);
 
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum EnIPNetworkStatus { OnLine, OnLineReadRejected, OnLineWriteRejected, OnLineForwardOpenReject, OffLine };
 
     public class EnIPClient
@@ -69,7 +71,7 @@ namespace LibEthernetIPStack
                     offset += 2;
                     for (int i = 0; i < NbDevices; i++)
                     {
-                        EnIPRemoteDevice device = new EnIPRemoteDevice(remote_address, TcpTimeout, packet, ref offset);
+                        EnIPRemoteDevice device = new EnIPRemoteDevice(remote_address, TcpTimeout, packet, EncapPacket, ref offset);
                         DeviceArrival(device);
                     }
                 }
@@ -92,24 +94,42 @@ namespace LibEthernetIPStack
     }
 
     public class EnIPRemoteDevice
-    {
-        // Data comming from the reply to ListIdentity query
-        // get set are used by the property grid in EnIPExplorer
-        public ushort DataLength;
-        public ushort EncapsulationVersion { get; set; }
+    { 
+        
+        public string ProductName { get; set; }
+        public uint SerialNumber { get; set; }
+        public IdentityObjectState State { get; set; }
+        public short Status { get; set; }
         public string IPAddress => new IPAddress(SocketAddress.sin_addr).ToString();
-        public EnIPSocketAddress SocketAddress { get; set; }
         public ushort VendorId { get; set; }
         public ushort DeviceType { get; set; }
         public ushort ProductCode { get; set; }
         public List<byte> Revision { get; set; } = new List<byte>();
-        public short Status { get; set; }
-        public uint SerialNumber { get; set; }
-        public string ProductName { get; set; }
-        public IdentityObjectState State { get; set; }
+        public EnIPSocketAddress SocketAddress
+        {
+            get => socketAddress;
+            set
+            {
+                socketAddress = value;
+                if(this.ep == null || this.ep.Address.ToString() != new IPAddress(value.sin_addr).ToString())
+                {
+                    this.ep = new IPEndPoint(System.Net.IPAddress.Parse(IPAddress), value.sin_port);
+                    epUdp = new IPEndPoint(ep.Address, value.sin_port);
+                }
+            }
+        }
+        private EnIPSocketAddress socketAddress;
+        [JsonIgnore]
+        // Data comming from the reply to ListIdentity query
+        // get set are used by the property grid in EnIPExplorer
+        public ushort DataLength;
+        [JsonIgnore]
+        public ushort EncapsulationVersion { get; set; }
 
-        private IPEndPoint ep { get; } // The Tcp endpoint
-        private IPEndPoint epUdp { get; } // The Udp endpoint : same IP, port 2222
+        public Encapsulation_Packet IdentityEncapPacket { get; set; }
+
+        private IPEndPoint ep { get;  set; } // The Tcp endpoint
+        private IPEndPoint epUdp { get; set; } // The Udp endpoint : same IP, port 2222
         // Not a property to avoid browsable in propertyGrid, also [Browsable(false)] could be used
         public IPAddress IPAdd() { return ep.Address; }
 
@@ -182,25 +202,20 @@ namespace LibEthernetIPStack
         // This constuctor is used with the ListIdentity response buffer
         // No local endpoint given here, the TCP/IP stack should do the job
         // if more than one interface is present
-        public EnIPRemoteDevice(IPEndPoint ep, int TcpTimeout, byte[] DataArray, ref int Offset)
+        public EnIPRemoteDevice(IPEndPoint ep, int TcpTimeout, byte[] DataArray, Encapsulation_Packet encapsulation, ref int Offset)
         {
             this.ep = ep;
+            IdentityEncapPacket = encapsulation;
             epUdp = new IPEndPoint(ep.Address, 2222);
             Tcpclient = new EnIPTCPClientTransport(TcpTimeout);
             FromListIdentityResponse(DataArray, ref Offset);
         }
 
-        public EnIPRemoteDevice(IPEndPoint ep, int TcpTimeout = 100)
-        {
-            this.ep = ep;
-            epUdp = new IPEndPoint(ep.Address, 2222);
-            Tcpclient = new EnIPTCPClientTransport(TcpTimeout);
-            ProductName = "";
-        }
         public EnIPRemoteDevice()
         {
-
+            Tcpclient = new EnIPTCPClientTransport(100);
         }
+
         public void Dispose()
         {
             if (IsConnected())
@@ -590,6 +605,7 @@ namespace LibEthernetIPStack
     {
         // set is present to shows not greyed in the property grid
         public ushort Id { get; set; }
+        public CIPObjectLibrary IdEnum => Enum.Parse<CIPObjectLibrary>(Id.ToString());
         public EnIPNetworkStatus Status { get; set; }
         public CIPObject DecodedMembers { get; set; }
         public byte[] RawData { get; set; }
@@ -599,8 +615,8 @@ namespace LibEthernetIPStack
         public abstract EnIPNetworkStatus WriteDataToNetwork();
 
         public abstract string GetStrPath();
-
-        public EnIPRemoteDevice RemoteDevice;
+        [JsonIgnore]
+        public EnIPRemoteDevice RemoteDevice { get; set; }
 
         protected EnIPNetworkStatus ReadDataFromNetwork(byte[] Path, CIPServiceCodes Service)
         {
