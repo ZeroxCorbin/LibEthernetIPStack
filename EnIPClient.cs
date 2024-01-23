@@ -148,7 +148,7 @@ namespace LibEthernetIPStack
         // A global packet for response frames
         private byte[] packet = new byte[1500];
 
-        public List<EnIPClass> SupportedClassLists = new List<EnIPClass>();
+        public List<EnIPClass> SupportedClassLists { get; private set; } = new List<EnIPClass>();
 
         public event DeviceArrivalHandler DeviceArrival;
 
