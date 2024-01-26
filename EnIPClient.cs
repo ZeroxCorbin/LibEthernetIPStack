@@ -749,8 +749,9 @@ namespace LibEthernetIPStack
                             if (DecoderClass == null)
                             {
                                 // try to create the associated class object
-                                var o = Activator.CreateInstance(Assembly.GetExecutingAssembly().FullName, "LibEthernetIPStack.ObjectsLibrary.CIP_" + classid.ToString() + "_instance");
-                                DecodedMembers = (CIPObject)o.Unwrap();
+                                //var o = Activator.CreateInstance(Assembly.GetExecutingAssembly().FullName, "LibEthernetIPStack.ObjectsLibrary.CIP_" + classid.ToString() + "_instance");
+                                //DecodedMembers = (CIPObject)o.Unwrap();
+                                DecodedMembers = new CIPObjectBaseClass(classid.ToString());
                             }
                             else
                             {
