@@ -35,6 +35,8 @@ using LibEthernetIPStack.ObjectsLibrary;
 using System.Linq;
 using Newtonsoft.Json.Converters;
 using System.Collections.ObjectModel;
+using System.Data;
+using NLog;
 
 namespace LibEthernetIPStack
 {
@@ -95,8 +97,12 @@ namespace LibEthernetIPStack
     }
 
     public class EnIPRemoteDevice
-    { 
-        
+    {
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
+        public delegate void StatusUpdateDel(EnIPNetworkStatus status, string msg);
+        public event StatusUpdateDel StatusUpdate;
+
         public string ProductName { get; set; }
         public uint SerialNumber { get; set; }
         public IdentityObjectState State { get; set; }
@@ -384,7 +390,7 @@ namespace LibEthernetIPStack
                 lock (LockTransaction)
                     Lenght = Tcpclient.SendReceive(p, out rep, out Offset, ref packet);
 
-                string ErrorMsg = "TCP mistake";
+                string ErrorMsg = "TCP Error";
 
                 if (Lenght > 24)
                 {
@@ -394,7 +400,7 @@ namespace LibEthernetIPStack
                         if (m.IsOK && m.IsService(Service))
                         {
                             // all is OK, and Offset is ready set at the beginning of data[]
-                            return EnIPNetworkStatus.OnLine;
+                            return UpdateStatus(EnIPNetworkStatus.OnLine);
                         }
                         else
                             ErrorMsg = m.GeneralStatus.ToString();
@@ -403,20 +409,20 @@ namespace LibEthernetIPStack
                         ErrorMsg = rep.Status.ToString();
                 }
 
-                Trace.WriteLine(Service.ToString() + " : " + ErrorMsg + " - Node " + EnIPPath.GetPath(DataPath) + " - Endpoint " + ep.ToString());
+                var o = Service.ToString() + " : " + ErrorMsg + " - Node " + EnIPPath.GetPath(DataPath) + " - Endpoint " + ep.ToString();
 
-                if (ErrorMsg == "TCP mistake")
-                    return EnIPNetworkStatus.OffLine;
+                if (ErrorMsg == "TCP Error")
+                    return UpdateStatus(EnIPNetworkStatus.OffLine, o);
 
                 if (Service == CIPServiceCodes.SetAttributeSingle)
-                    return EnIPNetworkStatus.OnLineWriteRejected;
+                    return UpdateStatus(EnIPNetworkStatus.OnLineWriteRejected, o);
                 else
-                    return EnIPNetworkStatus.OnLineReadRejected;
+                    return UpdateStatus(EnIPNetworkStatus.OnLineReadRejected, o);
             }
-            catch
+            catch(Exception ex)
             {
-                Trace.TraceWarning("Error while sending reques to endpoint " + ep.ToString());
-                return EnIPNetworkStatus.OffLine;
+                UpdateStatus(EnIPNetworkStatus.OffLine, "Error while sending request to endpoint. " + ep.ToString());
+                return UpdateStatus(EnIPNetworkStatus.OffLine, ex);
             }
         }
 
@@ -598,6 +604,26 @@ namespace LibEthernetIPStack
                 ClosePacket.T2O.Class1UnEnrolment();
 
             return SendUCMM_RR_Packet(EnIPPath.GetPath(6, 1), CIPServiceCodes.ForwardClose, ClosePacket.toByteArray(), ref Offset, ref Lenght, out packet);
+        }
+
+
+        private EnIPNetworkStatus UpdateStatus(EnIPNetworkStatus state, string msg = "")
+        {
+            if(state != EnIPNetworkStatus.OnLine)
+                Logger.Error(msg);
+            else
+                Logger.Debug(msg);
+
+            StatusUpdate?.Invoke(state, msg);
+            return state;
+        }
+
+        private EnIPNetworkStatus UpdateStatus(EnIPNetworkStatus state, Exception ex)
+        {
+            Logger.Error(ex);
+
+            StatusUpdate?.Invoke(state, ex.Message);
+            return state;
         }
     }
 
