@@ -27,18 +27,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.ComponentModel;
+using Newtonsoft.Json;
 
 namespace LibEthernetIPStack.ObjectsLibrary
 {
     // CIP_Identity_class not required, nothing new than in CIPObjectBaseClass
     // but implemented here to show how it should be done if additional attribut are present
+    [JsonObject(MemberSerialization.OptOut)]
     public class CIP_Identity_class : CIPObjectBaseClass
     {
         public CIP_Identity_class() { AttIdMax = 7; }
-        public override string ToString()
-        {
-            return "class Identity";
-        }
+        //public override string ToString()
+        //{
+        //    return "class Identity";
+        //}
         public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
         {
             // base decoding, but should be used only for attribut 1 to 7 and 
@@ -46,7 +48,7 @@ namespace LibEthernetIPStack.ObjectsLibrary
             return base.DecodeAttr(AttrNum, ref Idx, b);
         }
     }
-
+    [JsonObject(MemberSerialization.OptOut)]
     public class CIP_Identity_instance : CIPObject
     {
         [TypeConverter(typeof(ExpandableObjectConverter))]
@@ -75,13 +77,13 @@ namespace LibEthernetIPStack.ObjectsLibrary
 
         public CIP_Identity_instance() { AttIdMax = 7; }
 
-        public override string ToString()
-        {
-            if (FilteredAttribut == -1)
-                return "Identity instance";
-            else
-                return "Identity instance attribute #" + FilteredAttribut.ToString();
-        }
+        //public override string ToString()
+        //{
+        //    if (FilteredAttribut == -1)
+        //        return "Identity instance";
+        //    else
+        //        return "Identity instance attribute #" + FilteredAttribut.ToString();
+        //}
         public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
         {
             switch (AttrNum)

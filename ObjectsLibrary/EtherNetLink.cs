@@ -28,11 +28,26 @@ using System.Linq;
 using System.Text;
 using System.Net.NetworkInformation;
 using System.ComponentModel;
+using Newtonsoft.Json;
 
 namespace LibEthernetIPStack.ObjectsLibrary
 {
     // CIP_EtherNetLink_class not required, nothing new than in CIPObjectBaseClass
-
+    public class CIP_EtherNetLink_class : CIPObjectBaseClass
+    {
+        public CIP_EtherNetLink_class() { AttIdMax = 10; }
+        //public override string ToString()
+        //{
+        //    return "class Identity";
+        //}
+        public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
+        {
+            // base decoding, but should be used only for attribut 1 to 7 and 
+            // other decoding for attribut 8 and more
+            return base.DecodeAttr(AttrNum, ref Idx, b);
+        }
+    }
+    [JsonObject(MemberSerialization.OptOut)]
     public class CIP_EtherNetLink_instance : CIPObject
     {
         [TypeConverter(typeof(ExpandableObjectConverter))]
@@ -93,13 +108,13 @@ namespace LibEthernetIPStack.ObjectsLibrary
 
         public CIP_EtherNetLink_instance() { AttIdMax = 10; }
 
-        public override string ToString()
-        {
-            if (FilteredAttribut == -1)
-                return "EtherNetLink instance";
-            else
-                return "EtherNetLink instance attribute #" + FilteredAttribut.ToString();
-        }
+        //public override string ToString()
+        //{
+        //    if (FilteredAttribut == -1)
+        //        return "EtherNetLink instance";
+        //    else
+        //        return "EtherNetLink instance attribute #" + FilteredAttribut.ToString();
+        //}
 
         public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
         {

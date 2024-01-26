@@ -30,6 +30,7 @@ using System.Text;
 using System.ComponentModel;
 using System.Net.NetworkInformation;
 using System.Net;
+using Newtonsoft.Json;
 
 namespace LibEthernetIPStack.ObjectsLibrary
 {
@@ -41,7 +42,8 @@ namespace LibEthernetIPStack.ObjectsLibrary
     // base class used into the propertyGrid container to displays decoded members
     // also used to decode rawdata
     [TypeConverter(typeof(ExpandableObjectConverter))]
-    public abstract class CIPObject : ICustomTypeDescriptor
+    [JsonObject(MemberSerialization.OptOut)]
+    public abstract class CIPObject
     {
         public byte[] Remain_Undecoded_Bytes { get; set; } // if name changes, remember to modify GetProperties method also !
 

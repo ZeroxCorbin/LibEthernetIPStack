@@ -34,6 +34,7 @@ using Newtonsoft.Json;
 using LibEthernetIPStack.ObjectsLibrary;
 using System.Linq;
 using Newtonsoft.Json.Converters;
+using System.Collections.ObjectModel;
 
 namespace LibEthernetIPStack
 {
@@ -148,7 +149,7 @@ namespace LibEthernetIPStack
         // A global packet for response frames
         private byte[] packet = new byte[1500];
 
-        public List<EnIPClass> SupportedClassLists { get; private set; } = new List<EnIPClass>();
+        public ObservableCollection<EnIPClass> SupportedClassLists { get; private set; } = new ObservableCollection<EnIPClass>();
 
         public event DeviceArrivalHandler DeviceArrival;
 
@@ -462,7 +463,7 @@ namespace LibEthernetIPStack
                 SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.ConnectionManager));
             }
 
-            return SupportedClassLists;
+            return SupportedClassLists.ToList();
         }
 
         public void UnRegisterSession()
@@ -722,7 +723,7 @@ namespace LibEthernetIPStack
                             if (DecoderClass == null)
                             {
                                 // try to create the associated class object
-                                var o = Activator.CreateInstance(Assembly.GetExecutingAssembly().FullName, "System.Net.EnIPStack.ObjectsLibrary.CIP_" + classid.ToString() + "_class");
+                                var o = Activator.CreateInstance(Assembly.GetExecutingAssembly().FullName, "LibEthernetIPStack.ObjectsLibrary.CIP_" + classid.ToString() + "_instance");
                                 DecodedMembers = (CIPObject)o.Unwrap();
                             }
                             else
@@ -732,7 +733,7 @@ namespace LibEthernetIPStack
 
                             }
                         }
-                        catch
+                        catch(Exception ex)
                         {
                             // echec, get the base class as described in Volume 1, §4-4.1 Class Attributes
                             DecodedMembers = new CIPObjectBaseClass(classid.ToString());

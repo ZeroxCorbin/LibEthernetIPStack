@@ -27,11 +27,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.ComponentModel;
+using Newtonsoft.Json;
 
 namespace LibEthernetIPStack.ObjectsLibrary
 {
     // CIP_MessageRouter_class not required, nothing new than in CIPObjectBaseClass
-
+    public class CIP_MessageRouter_class : CIPObjectBaseClass
+    {
+        public CIP_MessageRouter_class() { AttIdMax = 4; }
+        //public override string ToString()
+        //{
+        //    return "class Identity";
+        //}
+        public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
+        {
+            // base decoding, but should be used only for attribut 1 to 7 and 
+            // other decoding for attribut 8 and more
+            return base.DecodeAttr(AttrNum, ref Idx, b);
+        }
+    }
+    [JsonObject(MemberSerialization.OptOut)]
     public class CIP_MessageRouter_instance : CIPObject
     {
         [TypeConverter(typeof(ExpandableObjectConverter))]
@@ -53,13 +68,13 @@ namespace LibEthernetIPStack.ObjectsLibrary
 
         public CIP_MessageRouter_instance() { AttIdMax = 4; }
 
-        public override string ToString()
-        {
-            if (FilteredAttribut == -1)
-                return "MessageRouter instance";
-            else
-                return "MessageRouter instance attribute #" + FilteredAttribut.ToString();
-        }
+        //public override string ToString()
+        //{
+        //    if (FilteredAttribut == -1)
+        //        return "MessageRouter instance";
+        //    else
+        //        return "MessageRouter instance attribute #" + FilteredAttribut.ToString();
+        //}
 
         public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
         {

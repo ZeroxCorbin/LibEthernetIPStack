@@ -29,11 +29,26 @@ using System.Linq;
 using System.Text;
 using System.ComponentModel;
 using LibEthernetIPStack;
+using Newtonsoft.Json;
 
 namespace LibEthernetIPStack.ObjectsLibrary
 {
     // CIP_TCPIPInterface_class not required, nothing new than in CIPObjectBaseClass
-
+    public class CIP_TCPIPInterface_class : CIPObjectBaseClass
+    {
+        public CIP_TCPIPInterface_class() { AttIdMax = 4; }
+        //public override string ToString()
+        //{
+        //    return "class Identity";
+        //}
+        public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
+        {
+            // base decoding, but should be used only for attribut 1 to 7 and 
+            // other decoding for attribut 8 and more
+            return base.DecodeAttr(AttrNum, ref Idx, b);
+        }
+    }
+    [JsonObject(MemberSerialization.OptOut)]
     public class CIP_TCPIPInterface_instance : CIPObject
     {
         [TypeConverter(typeof(ExpandableObjectConverter))]

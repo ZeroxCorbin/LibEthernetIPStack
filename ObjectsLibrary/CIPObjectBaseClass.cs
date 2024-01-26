@@ -23,6 +23,7 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 *********************************************************************/
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,7 +31,7 @@ using System.Text;
 
 namespace LibEthernetIPStack.ObjectsLibrary
 {
-
+    [JsonObject(MemberSerialization.OptOut)]
     // Common class attribut : 4-4.1 Class Attributes
     public class CIPObjectBaseClass : CIPObject
     {
@@ -62,10 +63,10 @@ namespace LibEthernetIPStack.ObjectsLibrary
             AttIdMax = 7;
         }
 
-        public override string ToString()
-        {
-            return "class " + Name;
-        }
+        //public override string ToString()
+        //{
+        //    return "CIP_" + Name + "_class";
+        //}
 
         public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
         {
