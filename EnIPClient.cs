@@ -37,6 +37,7 @@ using Newtonsoft.Json.Converters;
 using System.Collections.ObjectModel;
 using System.Data;
 using NLog;
+using System.Threading.Tasks;
 
 namespace LibEthernetIPStack
 {
@@ -44,6 +45,7 @@ namespace LibEthernetIPStack
 
     [JsonConverter(typeof(StringEnumConverter))]
     public enum EnIPNetworkStatus { OnLine, OnLineReadRejected, OnLineWriteRejected, OnLineForwardOpenReject, OffLine };
+    public enum EnIPForwardOpenStatus { ForwardOpen, ForwardClose };
 
     public class EnIPClient
     {
@@ -100,8 +102,11 @@ namespace LibEthernetIPStack
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-        public delegate void StatusUpdateDel(EnIPNetworkStatus status, string msg);
-        public event StatusUpdateDel StatusUpdate;
+        public delegate void NetworkStatusUpdateDel(EnIPNetworkStatus status, string msg);
+        public event NetworkStatusUpdateDel NetworkStatusUpdate;
+
+        public delegate void ForwardOpenStatusUpdateDel(EnIPForwardOpenStatus status);
+        public event ForwardOpenStatusUpdateDel ForwardOpenStatusUpdate;
 
         public string ProductName { get; set; }
         public uint SerialNumber { get; set; }
@@ -578,7 +583,8 @@ namespace LibEthernetIPStack
                 ClosePacket = new ForwardClose_Packet(FwPkt, T2O);
             }
 
-            return Status;
+            Task.Run(() => ForwardOpenStatusUpdate?.Invoke(Status == EnIPNetworkStatus.OnLine ? EnIPForwardOpenStatus.ForwardOpen : EnIPForwardOpenStatus.ForwardClose));
+            return UpdateStatus(Status);
         }
 
         [Obsolete("use ForwardClose(ClosePacket) instead")]
@@ -591,7 +597,8 @@ namespace LibEthernetIPStack
             if (T2O != null)
                 T2O.Class1UnEnrolment();
 
-            return SendUCMM_RR_Packet(EnIPPath.GetPath(6, 1), CIPServiceCodes.ForwardClose, ClosePacket.toByteArray(), ref Offset, ref Lenght, out packet);
+            Task.Run(() => ForwardOpenStatusUpdate?.Invoke(EnIPForwardOpenStatus.ForwardClose));
+            return UpdateStatus(SendUCMM_RR_Packet(EnIPPath.GetPath(6, 1), CIPServiceCodes.ForwardClose, ClosePacket.toByteArray(), ref Offset, ref Lenght, out packet));
         }
 
         public EnIPNetworkStatus ForwardClose(ForwardClose_Packet ClosePacket)
@@ -603,7 +610,8 @@ namespace LibEthernetIPStack
             if (ClosePacket.T2O != null)
                 ClosePacket.T2O.Class1UnEnrolment();
 
-            return SendUCMM_RR_Packet(EnIPPath.GetPath(6, 1), CIPServiceCodes.ForwardClose, ClosePacket.toByteArray(), ref Offset, ref Lenght, out packet);
+            Task.Run(() => ForwardOpenStatusUpdate?.Invoke(EnIPForwardOpenStatus.ForwardClose));
+            return UpdateStatus(SendUCMM_RR_Packet(EnIPPath.GetPath(6, 1), CIPServiceCodes.ForwardClose, ClosePacket.toByteArray(), ref Offset, ref Lenght, out packet));
         }
 
 
@@ -614,7 +622,7 @@ namespace LibEthernetIPStack
             else
                 Logger.Debug(msg);
 
-            StatusUpdate?.Invoke(state, msg);
+            NetworkStatusUpdate?.Invoke(state, msg);
             return state;
         }
 
@@ -622,7 +630,7 @@ namespace LibEthernetIPStack
         {
             Logger.Error(ex);
 
-            StatusUpdate?.Invoke(state, ex.Message);
+            NetworkStatusUpdate?.Invoke(state, ex.Message);
             return state;
         }
     }
