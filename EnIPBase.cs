@@ -29,6 +29,7 @@ using System.Linq;
 using System.Text;
 using System.Diagnostics;
 using System.Net;
+using System.Text.Json.Serialization;
 
 namespace LibEthernetIPStack
 {
@@ -170,6 +171,7 @@ namespace LibEthernetIPStack
     {
         public EncapsulationCommands Command { get; set; }
         public ushort Length { get; set; }
+        [JsonIgnore]
         public uint Sessionhandle { get; set; }
         //  Volume 2 : Table 2-3.3 Error Codes - 0x0000 Success, others value error
         public EncapsulationStatus Status { get; } = EncapsulationStatus.Invalid_Session_Handle;

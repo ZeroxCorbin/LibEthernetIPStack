@@ -28,6 +28,15 @@ using Newtonsoft.Json.Converters;
 
 namespace LibEthernetIPStack
 {
+
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum CipSegmentTypes : byte { PortSegment = 0, LogicalSegment = 32, NetwortkSegment = 64, SymbolicSegment = 96, DataSegment = 128, DataTypeC62 = 160, DataTypeC61 = 192, Reserved = 224 }
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum CipSize : byte { U8 = 0, U16 = 1, U32 = 2, Reserved = 3 }
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum CipLogicalType : byte { ClassID = 0, InstanceID = 4, MemberID = 8, ConnectionPoint = 12, AttributeId = 16, Special = 20, ServiceID = 24, ExtendedLogical = 28 }
+
+
     [JsonConverter(typeof(StringEnumConverter))]
     // Volume 2 : Table 2-3.2 Encapsulation Commands
     public enum EncapsulationCommands : ushort

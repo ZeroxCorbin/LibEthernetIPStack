@@ -121,7 +121,7 @@ namespace LibEthernetIPStack
                 if(this.ep == null || this.ep.Address.ToString() != new IPAddress(value.sin_addr).ToString())
                 {
                     this.ep = new IPEndPoint(System.Net.IPAddress.Parse(IPAddress), value.sin_port);
-                    epUdp = new IPEndPoint(ep.Address, value.sin_port);
+                    epUdp = new IPEndPoint(ep.Address, 2222);
                 }
             }
         }
@@ -829,8 +829,9 @@ namespace LibEthernetIPStack
             {
                 if (DecoderClass == null)
                 {
-                    var o = Activator.CreateInstance(Assembly.GetExecutingAssembly().FullName, "System.Net.EnIPStack.ObjectsLibrary.CIP_" + classid.ToString() + "_instance");
-                    DecodedMembers = (CIPObject)o.Unwrap();
+                    //var o = Activator.CreateInstance(Assembly.GetExecutingAssembly().FullName, "LibEthernetIPStack.ObjectsLibrary.CIP_" + classid.ToString() + "_instance");
+                    //DecodedMembers = (CIPObject)o.Unwrap();
+                    DecodedMembers = new CIPObjectBaseClass(classid.ToString());
                 }
                 else
                 {
