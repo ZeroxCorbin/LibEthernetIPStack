@@ -179,12 +179,12 @@ namespace LibEthernetIPStack
         public byte[] SenderContext { get; set; } = new byte[8];
         public uint Options { get; set; }
         // Not used in the EncapsulationPacket receive objects
-        public byte[] Encapsulateddata { get; set; } = null;
+        public byte[]? Encapsulateddata { get; set; } = null;
 
         public bool IsOK { get { return Status == EncapsulationStatus.Success; } }
 
         public Encapsulation_Packet() { }
-        public Encapsulation_Packet(EncapsulationCommands Command, uint Sessionhandle = 0, byte[] Encapsulateddata = null)
+        public Encapsulation_Packet(EncapsulationCommands Command, uint Sessionhandle = 0, byte[]? Encapsulateddata = null)
         {
             this.Command = Command;
             this.Sessionhandle = Sessionhandle;
@@ -632,7 +632,7 @@ namespace LibEthernetIPStack
 
         public byte[] data;
 
-        public SequencedAddressItem(uint ConnectionId = 0, uint SequenceNumber = 0, byte[] data = null)
+        public SequencedAddressItem(uint ConnectionId = 0, uint SequenceNumber = 0, byte[]? data = null)
         {
             this.ConnectionId = ConnectionId;
             this.SequenceNumber = SequenceNumber;
@@ -673,7 +673,7 @@ namespace LibEthernetIPStack
             // Offset is now at the beginning of the raw data
         }
 
-        public byte[] toByteArray(byte[] newdata = null)
+        public byte[] toByteArray(byte[]? newdata = null)
         {
             byte[] retVal;
 

@@ -377,7 +377,7 @@ namespace LibEthernetIPStack
             }
         }
 
-        public EnIPNetworkStatus SendUCMM_RR_Packet(byte[] DataPath, CIPServiceCodes Service, byte[] data, ref int Offset, ref int Lenght, out byte[] packet)
+        public EnIPNetworkStatus SendUCMM_RR_Packet(byte[] DataPath, CIPServiceCodes Service, byte[]? data, ref int Offset, ref int Lenght, out byte[] packet)
         {
             packet = this.packet;
 
@@ -535,7 +535,7 @@ namespace LibEthernetIPStack
             return ForwardOpen(Config, O2T, T2O, out ClosePacket, conf, WriteConfig);
         }
 
-        public EnIPNetworkStatus ForwardOpen(EnIPAttribut Config, EnIPAttribut O2T, EnIPAttribut T2O, out ForwardClose_Packet ClosePacket, ForwardOpen_Config conf, bool WriteConfig = false)
+        public EnIPNetworkStatus ForwardOpen(EnIPAttribut Config, EnIPAttribut O2T, EnIPAttribut T2O, out ForwardClose_Packet? ClosePacket, ForwardOpen_Config conf, bool WriteConfig = false)
         {
             ClosePacket = null;
 
@@ -685,7 +685,7 @@ namespace LibEthernetIPStack
 
         Type DecoderClass;
 
-        public EnIPClass(EnIPRemoteDevice RemoteDevice, ushort Id, Type DecoderClass = null)
+        public EnIPClass(EnIPRemoteDevice RemoteDevice, ushort Id, Type? DecoderClass = null)
         {
             this.Id = Id;
             this.RemoteDevice = RemoteDevice;
@@ -787,7 +787,7 @@ namespace LibEthernetIPStack
         public EnIPClass myClass;
         public Type DecoderClass;
 
-        public EnIPInstance(EnIPClass Class, ushort Id, Type DecoderClass = null)
+        public EnIPInstance(EnIPClass Class, ushort Id, Type? DecoderClass = null)
         {
             this.Id = Id;
             myClass = Class;

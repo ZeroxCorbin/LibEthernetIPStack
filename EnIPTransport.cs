@@ -178,7 +178,7 @@ namespace LibEthernetIPStack
             return ep;
         }
 
-        IPEndPoint BroadcastAddress = null;
+        IPEndPoint? BroadcastAddress = null;
         public IPEndPoint GetBroadcastAddress()
         {
             if (BroadcastAddress == null) BroadcastAddress = _GetBroadcastAddress();
@@ -256,7 +256,7 @@ namespace LibEthernetIPStack
             Tcpclient = null;
         }
 
-        public int SendReceive(Encapsulation_Packet SendPkt, out Encapsulation_Packet ReceivePkt, out int Offset, ref byte[] packet)
+        public int SendReceive(Encapsulation_Packet SendPkt, out Encapsulation_Packet? ReceivePkt, out int Offset, ref byte[] packet)
         {
             ReceivePkt = null;
             Offset = 0;
