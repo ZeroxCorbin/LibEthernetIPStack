@@ -159,7 +159,7 @@ namespace LibEthernetIPStack
 
         // A global packet for response frames
         private byte[] packet = new byte[1500];
-
+[JsonIgnore]
         public ObservableCollection<EnIPClass> SupportedClassLists { get; private set; } = new ObservableCollection<EnIPClass>();
 
         public event DeviceArrivalHandler DeviceArrival;
