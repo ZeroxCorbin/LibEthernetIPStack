@@ -776,7 +776,8 @@ namespace LibEthernetIPStack
                     }
                     DecodedMembers.SetRawBytes(RawData);
                 }
-                catch { }
+                catch(Exception e)
+                { }
             }
             return ret;
         }
