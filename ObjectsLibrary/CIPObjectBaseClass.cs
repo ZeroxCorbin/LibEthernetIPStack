@@ -87,7 +87,8 @@ namespace LibEthernetIPStack.ObjectsLibrary
                     {
                         Optional_Attributes = new ushort[Number_of_Attributes.Value];
                         for (int i = 0; i < Number_of_Attributes.Value; i++)
-                            Optional_Attributes[i] = GetUInt16(ref Idx, b).Value;
+                            if(GetUInt16(ref Idx, b).HasValue)
+                                Optional_Attributes[i] = GetUInt16(ref Idx, b).Value;
                     }
                     return true;
                 case 5:
@@ -96,7 +97,8 @@ namespace LibEthernetIPStack.ObjectsLibrary
                     {
                         Optional_Services = new ushort[Number_of_Services.Value];
                         for (int i = 0; i < Number_of_Services.Value; i++)
-                            Optional_Services[i] = GetUInt16(ref Idx, b).Value;
+                            if (GetUInt16(ref Idx, b).HasValue)
+                                Optional_Services[i] = GetUInt16(ref Idx, b).Value;
                     }
                     return true;
                 case 6:

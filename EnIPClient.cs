@@ -23,7 +23,6 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 *********************************************************************/
-using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Net;
@@ -39,6 +38,7 @@ using System.Data;
 using NLog;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
+using System;
 
 namespace LibEthernetIPStack
 {
@@ -103,37 +103,26 @@ namespace LibEthernetIPStack
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
+        public event DeviceArrivalHandler DeviceArrival;
+
         public delegate void NetworkStatusUpdateDel(EnIPNetworkStatus status, string msg);
         public event NetworkStatusUpdateDel NetworkStatusUpdate;
 
         public delegate void ForwardOpenStatusUpdateDel(EnIPForwardOpenStatus status);
         public event ForwardOpenStatusUpdateDel ForwardOpenStatusUpdate;
 
-        [ObservableProperty]
-        private string productName;
-
-        [ObservableProperty]
-        private uint serialNumber;
-
-        [ObservableProperty]
-        private IdentityObjectState state;
-
-        [ObservableProperty]
-        private short status;
+        [ObservableProperty] private string productName;
+        [ObservableProperty] private uint serialNumber;
+        [ObservableProperty] private IdentityObjectState state;
+        [ObservableProperty] private short status;
 
         public string IPAddress => new IPAddress(SocketAddress.sin_addr).ToString();
 
-        [ObservableProperty]
-        private ushort vendorId;
+        [ObservableProperty] private ushort vendorId;
+        [ObservableProperty]private ushort deviceType;
+        [ObservableProperty] private ushort productCode;
 
-        [ObservableProperty]
-        private ushort deviceType;
-
-        [ObservableProperty]
-        private ushort productCode;
-
-        [ObservableProperty]
-        private ObservableCollection<byte> revision = [];
+        [ObservableProperty] private ObservableCollection<byte> revision = [];
 
         private EnIPSocketAddress socketAddress;
         public EnIPSocketAddress SocketAddress
@@ -150,30 +139,21 @@ namespace LibEthernetIPStack
             }
         }
 
-        [JsonIgnore]
         // Data comming from the reply to ListIdentity query
         // get set are used by the property grid in EnIPExplorer
-        [ObservableProperty]
-        private ushort dataLength;
+        [ObservableProperty] [property: JsonIgnore] private ushort dataLength;
+        [ObservableProperty] [property: JsonIgnore] private ushort encapsulationVersion;
 
-        [JsonIgnore]
-        [ObservableProperty]
-        private ushort encapsulationVersion;
-
-        [ObservableProperty]
-        private Encapsulation_Packet identityEncapPacket;
+        [ObservableProperty] private Encapsulation_Packet identityEncapPacket;
 
         private IPEndPoint ep;
         private IPEndPoint epUdp;
 
-
         // Not a property to avoid browsable in propertyGrid, also [Browsable(false)] could be used
         public IPAddress IPAdd() { return ep.Address; }
 
-        [JsonIgnore]
-        public bool autoConnect = true;
-        [JsonIgnore]
-        public bool autoRegisterSession = true;
+        [JsonIgnore] public bool autoConnect = true;
+        [JsonIgnore] public bool autoRegisterSession = true;
 
         private uint SessionHandle = 0; // When Register Session is set
 
@@ -186,8 +166,6 @@ namespace LibEthernetIPStack
         private byte[] packet = new byte[1500];
 
         public ObservableCollection<EnIPClass> SupportedClassLists { get; private set; } = new ObservableCollection<EnIPClass>();
-
-        public event DeviceArrivalHandler DeviceArrival;
 
         private void FromListIdentityResponse(byte[] DataArray, ref int Offset)
         {
@@ -782,9 +760,8 @@ namespace LibEthernetIPStack
                             if (DecoderClass == null)
                             {
                                 // try to create the associated class object
-                                //var o = Activator.CreateInstance(Assembly.GetExecutingAssembly().FullName, "LibEthernetIPStack.ObjectsLibrary.CIP_" + classid.ToString() + "_instance");
-                                //DecodedMembers = (CIPObject)o.Unwrap();
-                                DecodedMembers = new CIPObjectBaseClass(classid.ToString());
+                                DecodedMembers = (CIPObject)Activator.CreateInstance( Assembly.GetExecutingAssembly().GetType("LibEthernetIPStack.ObjectsLibrary.CIP_" + classid.ToString() + "_class"));
+                                //DecodedMembers = new CIPObjectBaseClass(classid.ToString());
                             }
                             else
                             {
@@ -863,9 +840,9 @@ namespace LibEthernetIPStack
             {
                 if (DecoderClass == null)
                 {
-                    //var o = Activator.CreateInstance(Assembly.GetExecutingAssembly().FullName, "LibEthernetIPStack.ObjectsLibrary.CIP_" + classid.ToString() + "_instance");
+                    DecodedMembers = (CIPObject)Activator.CreateInstance(Assembly.GetExecutingAssembly().GetType("LibEthernetIPStack.ObjectsLibrary.CIP_" + classid.ToString() + "_instance"));
                     //DecodedMembers = (CIPObject)o.Unwrap();
-                    DecodedMembers = new CIPObjectBaseClass(classid.ToString());
+                    //DecodedMembers = new CIPObjectBaseClass(classid.ToString());
                 }
                 else
                 {
