@@ -38,6 +38,7 @@ using System.Collections.ObjectModel;
 using System.Data;
 using NLog;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace LibEthernetIPStack
 {
@@ -98,7 +99,7 @@ namespace LibEthernetIPStack
         }
     }
 
-    public class EnIPRemoteDevice
+    public partial class EnIPRemoteDevice : ObservableObject, IDisposable
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -108,40 +109,64 @@ namespace LibEthernetIPStack
         public delegate void ForwardOpenStatusUpdateDel(EnIPForwardOpenStatus status);
         public event ForwardOpenStatusUpdateDel ForwardOpenStatusUpdate;
 
-        public string ProductName { get; set; }
-        public uint SerialNumber { get; set; }
-        public IdentityObjectState State { get; set; }
-        public short Status { get; set; }
+        [ObservableProperty]
+        private string productName;
+
+        [ObservableProperty]
+        private uint serialNumber;
+
+        [ObservableProperty]
+        private IdentityObjectState state;
+
+        [ObservableProperty]
+        private short status;
+
         public string IPAddress => new IPAddress(SocketAddress.sin_addr).ToString();
-        public ushort VendorId { get; set; }
-        public ushort DeviceType { get; set; }
-        public ushort ProductCode { get; set; }
-        public List<byte> Revision { get; set; } = new List<byte>();
+
+        [ObservableProperty]
+        private ushort vendorId;
+
+        [ObservableProperty]
+        private ushort deviceType;
+
+        [ObservableProperty]
+        private ushort productCode;
+
+        [ObservableProperty]
+        private ObservableCollection<byte> revision = [];
+
+        private EnIPSocketAddress socketAddress;
         public EnIPSocketAddress SocketAddress
         {
             get => socketAddress;
             set
             {
-                socketAddress = value;
-                if(this.ep == null || this.ep.Address.ToString() != new IPAddress(value.sin_addr).ToString())
+                SetProperty(ref socketAddress, value);
+                if (this.ep == null || this.ep.Address.ToString() != new IPAddress(value.sin_addr).ToString())
                 {
                     this.ep = new IPEndPoint(System.Net.IPAddress.Parse(IPAddress), value.sin_port);
                     epUdp = new IPEndPoint(ep.Address, 2222);
                 }
             }
         }
-        private EnIPSocketAddress socketAddress;
+
         [JsonIgnore]
         // Data comming from the reply to ListIdentity query
         // get set are used by the property grid in EnIPExplorer
-        public ushort DataLength;
+        [ObservableProperty]
+        private ushort dataLength;
+
         [JsonIgnore]
-        public ushort EncapsulationVersion { get; set; }
+        [ObservableProperty]
+        private ushort encapsulationVersion;
 
-        public Encapsulation_Packet IdentityEncapPacket { get; set; }
+        [ObservableProperty]
+        private Encapsulation_Packet identityEncapPacket;
 
-        private IPEndPoint ep { get;  set; } // The Tcp endpoint
-        private IPEndPoint epUdp { get; set; } // The Udp endpoint : same IP, port 2222
+        private IPEndPoint ep;
+        private IPEndPoint epUdp;
+
+
         // Not a property to avoid browsable in propertyGrid, also [Browsable(false)] could be used
         public IPAddress IPAdd() { return ep.Address; }
 
@@ -424,7 +449,7 @@ namespace LibEthernetIPStack
                 else
                     return UpdateStatus(EnIPNetworkStatus.OnLineReadRejected, o);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 UpdateStatus(EnIPNetworkStatus.OffLine, "Error while sending request to endpoint. " + ep.ToString());
                 return UpdateStatus(EnIPNetworkStatus.OffLine, ex);
@@ -617,7 +642,7 @@ namespace LibEthernetIPStack
 
         private EnIPNetworkStatus UpdateStatus(EnIPNetworkStatus state, string msg = "")
         {
-            if(state != EnIPNetworkStatus.OnLine)
+            if (state != EnIPNetworkStatus.OnLine)
                 Logger.Error(msg);
             else
                 Logger.Debug(msg);
@@ -768,7 +793,7 @@ namespace LibEthernetIPStack
 
                             }
                         }
-                        catch(Exception ex)
+                        catch (Exception ex)
                         {
                             // echec, get the base class as described in Volume 1, §4-4.1 Class Attributes
                             DecodedMembers = new CIPObjectBaseClass(classid.ToString());
@@ -776,7 +801,7 @@ namespace LibEthernetIPStack
                     }
                     DecodedMembers.SetRawBytes(RawData);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 { }
             }
             return ret;
