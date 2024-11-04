@@ -35,7 +35,7 @@ namespace LibEthernetIPStack.ObjectsLibrary
     // Common class attribut : 4-4.1 Class Attributes
     public class CIPObjectBaseClass : CIPObject
     {
-        [CIPAttributId(1)]
+        [CIPAttributId(1, "Revision")]
         public ushort? Revision { get; set; }
         [CIPAttributId(2)]
         public ushort? Max_Instance { get; set; }

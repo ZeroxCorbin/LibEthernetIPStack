@@ -51,27 +51,29 @@ namespace LibEthernetIPStack.ObjectsLibrary
     [JsonObject(MemberSerialization.OptOut)]
     public class CIP_Identity_instance : CIPObject
     {
+        public string Serialized => JsonConvert.SerializeObject(this, new CIPAttributeIdSerializer());
+
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public class IdentityRevision
         {
             public byte? Major_Revision { get; set; }
             public byte? Minor_Revision { get; set; }
-            public override string ToString() { return ""; }
+            public override string ToString() { return $"{Major_Revision}.{Minor_Revision}"; }
         }
 
-        [CIPAttributId(1)]
+        [CIPAttributId(1, "Vendor ID")]
         public ushort? Vendor_ID { get; set; }
-        [CIPAttributId(2)]
+        [CIPAttributId(2, "Device Type")]
         public ushort? Device_Type { get; set; }
-        [CIPAttributId(3)]
+        [CIPAttributId(3, "Product Code")]
         public ushort? Product_Code { get; set; }
-        [CIPAttributId(4)]
+        [CIPAttributId(4, "Revision")]
         public IdentityRevision Revision { get; set; }
-        [CIPAttributId(5)]
+        [CIPAttributId(5, "Status")]
         public ushort? Status { get; set; }
-        [CIPAttributId(6)]
+        [CIPAttributId(6, "Serial Number")]
         public uint? Serial_Number { get; set; }
-        [CIPAttributId(7)]
+        [CIPAttributId(7, "Product Name")]
         public string Product_Name { get; set; }
 
 

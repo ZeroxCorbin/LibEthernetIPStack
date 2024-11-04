@@ -37,7 +37,8 @@ namespace LibEthernetIPStack.ObjectsLibrary
     public class CIPAttributId : Attribute
     {
         public int Id;
-        public CIPAttributId(int Id) { this.Id = Id; }
+        public string Name;
+        public CIPAttributId(int Id, string name = "") { this.Id = Id; this.Name = name; }
     }
     // base class used into the propertyGrid container to displays decoded members
     // also used to decode rawdata
