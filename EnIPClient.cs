@@ -960,7 +960,8 @@ namespace LibEthernetIPStack
                         DecodedMembers = myInstance.DecodedMembers; // get the same object as the associated Instance
                     }
                     int Idx = 0;
-                    DecodedMembers.DecodeAttr(Id, ref Idx, RawData);
+                    if(DecodedMembers != null)
+                        DecodedMembers.DecodeAttr(Id, ref Idx, RawData);
                 }
                 catch { }
             }
