@@ -51,14 +51,22 @@ namespace LibEthernetIPStack.ObjectsLibrary
     [JsonObject(MemberSerialization.OptOut)]
     public class CIP_TCPIPInterface_instance : CIPObject
     {
+        public string Serialized => JsonConvert.SerializeObject(this, new CIPAttributeIdSerializer());
+
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public class TCPIPInterface_Configuration
         {
+            [CIPAttributId(1, "IP Address")]
             public string IP_Address { get; set; } // string because IPAddress a greyed in the property grid
+            [CIPAttributId(1, "Net Mask")]
             public string NetMask { get; set; }
+            [CIPAttributId(1, "Gateway")]
             public string Gateway_Address { get; set; }
+            [CIPAttributId(1, "Name Server 1")]
             public string Name_Server_1 { get; set; }
+            [CIPAttributId(1, "Name Server 2")]
             public string Name_Server_2 { get; set; }
+            [CIPAttributId(1, "Domain Name")]
             public string Domain_Name { get; set; }
             public override string ToString() { return ""; }
         }
@@ -66,32 +74,36 @@ namespace LibEthernetIPStack.ObjectsLibrary
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public class TCPIPMcastConfig
         {
+            [CIPAttributId(1, "Alloc Control")]
             public byte? Alloc_Control { get; set; }
+            [CIPAttributId(1, "Reserved")]
             public byte? Reserved { get; set; }
+            [CIPAttributId(1, "Num Mcast")]
             public ushort? Num_Mcast { get; set; }
+            [CIPAttributId(1, "Mcast Start Addr")]
             public string Mcast_Start_Addr { get; set; }
             public override string ToString() { return ""; }
         }
 
-        [CIPAttributId(1)]
+        [CIPAttributId(1, "Status")]
         public uint? Status { get; set; }
-        [CIPAttributId(2)]
+        [CIPAttributId(2, "Configuration Capability")]
         public uint? Configuration_Capability { get; set; }
-        [CIPAttributId(3)]
+        [CIPAttributId(3, "Configuration Control")]
         public uint? Configuration_Control { get; set; }
-        [CIPAttributId(4)]
+        [CIPAttributId(4, "Path Size")]
         public ushort? Path_Size { get; set; }
-        [CIPAttributId(4)]
+        [CIPAttributId(4, "Physical Object Link Path")]
         public string PhysicalObjectLinkPath { get; set; }
-        [CIPAttributId(5)]
+        [CIPAttributId(5, "Interface Configuration")]
         public TCPIPInterface_Configuration Interface_Configuration { get; set; }
-        [CIPAttributId(6)]
+        [CIPAttributId(6, "Host Name")]
         public string Host_Name { get; set; }
-        [CIPAttributId(7)]
+        [CIPAttributId(7, "Saftey Network Number")]
         public byte[] Safety_Network_Number { get; set; }
-        [CIPAttributId(8)]
+        [CIPAttributId(8, "TTL")]
         public byte? TTL_Value { get; set; }
-        [CIPAttributId(9)]
+        [CIPAttributId(9, "Mcast Config")]
         public TCPIPMcastConfig Mcast_Config { get; set; }
 
         public CIP_TCPIPInterface_instance() { AttIdMax = 9; }

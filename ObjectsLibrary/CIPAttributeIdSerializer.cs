@@ -41,7 +41,7 @@ namespace LibEthernetIPStack.ObjectsLibrary
                             var propertyValue = property.GetValue(value);
                             if (propertyValue != null && !propertyValue.GetType().IsPrimitive && !(propertyValue is string))
                             {
-                                serializer.Serialize(writer, propertyValue);
+                                serializer.Serialize(writer, propertyValue, propertyValue.GetType());
                             }
                             else
                                 writer.WriteValue(propertyValue);

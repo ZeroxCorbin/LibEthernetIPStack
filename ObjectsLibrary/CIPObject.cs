@@ -46,6 +46,7 @@ namespace LibEthernetIPStack.ObjectsLibrary
     [JsonObject(MemberSerialization.OptOut)]
     public abstract class CIPObject
     {
+        [CIPAttributId(1, "Remain Undecoded Bytes")]
         public byte[] Remain_Undecoded_Bytes { get; set; } // if name changes, remember to modify GetProperties method also !
 
         protected int FilteredAttribut = -1;

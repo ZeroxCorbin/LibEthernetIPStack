@@ -49,6 +49,8 @@ namespace LibEthernetIPStack.ObjectsLibrary
     [JsonObject(MemberSerialization.OptOut)]
     public class CIP_MessageRouter_instance : CIPObject
     {
+        public string Serialized => JsonConvert.SerializeObject(this, new CIPAttributeIdSerializer());
+
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public class MessageRouterObjectList
         {
@@ -57,13 +59,13 @@ namespace LibEthernetIPStack.ObjectsLibrary
             public override string ToString() { return ""; }
         }
 
-        [CIPAttributId(1)]
+        [CIPAttributId(1, "Supported Objects")]
         public MessageRouterObjectList SupportedObjects { get; set; }
-        [CIPAttributId(2)]
+        [CIPAttributId(2, "Max Connections")]
         public ushort? MaxConnectionsSupported { get; set; }
-        [CIPAttributId(3)]
+        [CIPAttributId(3, "Concurrent Connections")]
         public ushort? NumberOfCurrentConnections { get; set; }
-        [CIPAttributId(4)]
+        [CIPAttributId(4, "Active Connections")]
         public ushort[] ActiveConnections { get; set; }
 
         public CIP_MessageRouter_instance() { AttIdMax = 4; }
