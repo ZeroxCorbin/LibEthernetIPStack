@@ -30,6 +30,7 @@ using System.Text;
 using System.Diagnostics;
 using System.Net;
 using Newtonsoft.Json;
+using LibEthernetIPStack.Shared;
 
 namespace LibEthernetIPStack
 {
