@@ -24,73 +24,67 @@
 *
 *********************************************************************/
 using Newtonsoft.Json;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-namespace LibEthernetIPStack.ObjectsLibrary
+namespace LibEthernetIPStack.ObjectsLibrary;
+
+
+// CIP_DLR_class not required, nothing new than in CIPObjectBaseClass
+public class CIP_DLR_class : CIPObjectBaseClass
 {
+    public CIP_DLR_class() => AttIdMax = 4;
+    //public override string ToString()
+    //{
+    //    return "class Identity";
+    //}
+    public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b) =>
+        // base decoding, but should be used only for attribut 1 to 7 and 
+        // other decoding for attribut 8 and more
+        base.DecodeAttr(AttrNum, ref Idx, b);
+}
+[JsonObject(MemberSerialization.OptOut)]
+public class CIP_DLR_instance : CIPObject
+{
+    [CIPAttributId(1)]
+    public byte? Network_Topology { get; set; }
+    [CIPAttributId(2)]
+    public byte? Network_Status { get; set; }
+    [CIPAttributId(3)]
+    public string Active_Supervisor_IPAddress { get; set; }
+    [CIPAttributId(4)]
+    public string Active_Supervisor_PhysicalAddress { get; set; }
+    [CIPAttributId(5)]
+    public uint? Capability_Flag { get; set; }
 
-    // CIP_DLR_class not required, nothing new than in CIPObjectBaseClass
-    public class CIP_DLR_class : CIPObjectBaseClass
+    public CIP_DLR_instance() => AttIdMax = 5;
+
+    //public override string ToString()
+    //{
+    //    if (FilteredAttribut == -1)
+    //        return "DLR instance";
+    //    else
+    //        return "DLR instance attribute #" + FilteredAttribut.ToString();
+    //}
+
+    public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
     {
-        public CIP_DLR_class() { AttIdMax = 4; }
-        //public override string ToString()
-        //{
-        //    return "class Identity";
-        //}
-        public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
+        switch (AttrNum)
         {
-            // base decoding, but should be used only for attribut 1 to 7 and 
-            // other decoding for attribut 8 and more
-            return base.DecodeAttr(AttrNum, ref Idx, b);
+            case 1:
+                Network_Topology = Getbyte(ref Idx, b);
+                return true;
+            case 2:
+                Network_Status = Getbyte(ref Idx, b);
+                return true;
+            case 3:
+                Active_Supervisor_IPAddress = GetIPAddress(ref Idx, b).ToString();
+                return true;
+            case 4:
+                Active_Supervisor_PhysicalAddress = GetPhysicalAddress(ref Idx, b).ToString();
+                return true;
+            case 5:
+                Capability_Flag = GetUInt32(ref Idx, b);
+                return true;
         }
-    }
-    [JsonObject(MemberSerialization.OptOut)]
-    public class CIP_DLR_instance : CIPObject
-    {
-        [CIPAttributId(1)]
-        public byte? Network_Topology { get; set; }
-        [CIPAttributId(2)]
-        public byte? Network_Status { get; set; }
-        [CIPAttributId(3)]
-        public string Active_Supervisor_IPAddress { get; set; }
-        [CIPAttributId(4)]
-        public string Active_Supervisor_PhysicalAddress { get; set; }
-        [CIPAttributId(5)]
-        public uint? Capability_Flag { get; set; }
-
-        public CIP_DLR_instance() { AttIdMax = 5; }
-
-        //public override string ToString()
-        //{
-        //    if (FilteredAttribut == -1)
-        //        return "DLR instance";
-        //    else
-        //        return "DLR instance attribute #" + FilteredAttribut.ToString();
-        //}
-
-        public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
-        {
-            switch (AttrNum)
-            {
-                case 1:
-                    Network_Topology = Getbyte(ref Idx, b);
-                    return true;
-                case 2:
-                    Network_Status = Getbyte(ref Idx, b);
-                    return true;
-                case 3:
-                    Active_Supervisor_IPAddress = GetIPAddress(ref Idx, b).ToString();
-                    return true;
-                case 4:
-                    Active_Supervisor_PhysicalAddress = GetPhysicalAddress(ref Idx, b).ToString();
-                    return true;
-                case 5:
-                    Capability_Flag = GetUInt32(ref Idx, b);
-                    return true;
-            }
-            return false;
-        }
+        return false;
     }
 }

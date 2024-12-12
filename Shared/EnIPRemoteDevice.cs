@@ -1,4 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using LibEthernetIPStack.Explicit;
+using LibEthernetIPStack.Implicit;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;

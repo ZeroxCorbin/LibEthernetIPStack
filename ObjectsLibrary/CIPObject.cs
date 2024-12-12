@@ -23,363 +23,316 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 *********************************************************************/
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.ComponentModel;
-using System.Net.NetworkInformation;
 using System.Net;
-using Newtonsoft.Json;
+using System.Net.NetworkInformation;
+using System.Text;
 
-namespace LibEthernetIPStack.ObjectsLibrary
+namespace LibEthernetIPStack.ObjectsLibrary;
+
+public class CIPAttributId : Attribute
 {
-    public class CIPAttributId : Attribute
+    public int Id;
+    public string Name;
+    public CIPAttributId(int Id, string name = "") { this.Id = Id; Name = name; }
+}
+// base class used into the propertyGrid container to displays decoded members
+// also used to decode rawdata
+[TypeConverter(typeof(ExpandableObjectConverter))]
+[JsonObject(MemberSerialization.OptOut)]
+public abstract class CIPObject
+{
+    [CIPAttributId(1, "Remain Undecoded Bytes")]
+    public byte[] Remain_Undecoded_Bytes { get; set; } // if name changes, remember to modify GetProperties method also !
+
+    protected int FilteredAttribut = -1;
+    protected int AttIdMax;
+
+    public void FilterAttribut(int AttId) => FilteredAttribut = AttId;
+
+    public virtual bool DecodeAttr(int AttrNum, ref int Idx, byte[] b) => false;
+    public virtual bool EncodeAttr(int AttrNum, ref int Idx, byte[] b) => false;
+
+    public bool SetRawBytes(byte[] b)
     {
-        public int Id;
-        public string Name;
-        public CIPAttributId(int Id, string name = "") { this.Id = Id; this.Name = name; }
+        int Idx = 0;
+
+        for (int i = 1; i < AttIdMax + 1; i++)
+            _ = DecodeAttr(i, ref Idx, b);
+
+        if (Idx < b.Length)
+        {
+            Remain_Undecoded_Bytes = new byte[b.Length - Idx];
+            Array.Copy(b, Idx, Remain_Undecoded_Bytes, 0, Remain_Undecoded_Bytes.Length);
+        }
+        return true;
     }
-    // base class used into the propertyGrid container to displays decoded members
-    // also used to decode rawdata
-    [TypeConverter(typeof(ExpandableObjectConverter))]
-    [JsonObject(MemberSerialization.OptOut)]
-    public abstract class CIPObject
+
+    public bool GetRawBytes(byte[] b)
     {
-        [CIPAttributId(1, "Remain Undecoded Bytes")]
-        public byte[] Remain_Undecoded_Bytes { get; set; } // if name changes, remember to modify GetProperties method also !
+        int Idx = 0;
 
-        protected int FilteredAttribut = -1;
-        protected int AttIdMax;
+        for (int i = 1; i < AttIdMax + 1; i++)
+            _ = EncodeAttr(i, ref Idx, b);
+        if (Idx < b.Length)
+            Array.Copy(Remain_Undecoded_Bytes, 0, b, Idx, Remain_Undecoded_Bytes.Length);
 
-        public void FilterAttribut(int AttId) { FilteredAttribut = AttId; }
+        return true;
+    }
 
-        public virtual bool DecodeAttr(int AttrNum, ref int Idx, byte[] b) { return false; }
-        public virtual bool EncodeAttr(int AttrNum, ref int Idx, byte[] b) { return false; }
+    public bool? Getbool(ref int Idx, byte[] buf)
+    {
+        if (buf.Length < Idx) return null;
+        bool ret = buf[Idx] == 1;
+        Idx += 1;
+        return ret;
+    }
+    public void Setbool(ref int Idx, byte[] buf, bool? val)
+    {
+        if (val == null) return;
+        Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 1);
+        Idx++;
+    }
+    public byte? Getbyte(ref int Idx, byte[] buf)
+    {
+        if (buf.Length < Idx) return null;
+        byte ret = buf[Idx];
+        Idx += 1;
+        return ret;
+    }
+    public void Setbyte(ref int Idx, byte[] buf, byte? val)
+    {
+        if (val == null) return;
+        Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 1);
+        Idx++;
+    }
+    public ushort? GetUInt16(ref int Idx, byte[] buf)
+    {
+        if (buf.Length < Idx + 1) return null;
+        ushort ret = BitConverter.ToUInt16(buf, Idx);
+        Idx += 2;
+        return ret;
+    }
+    public void SetUInt16(ref int Idx, byte[] buf, ushort? val)
+    {
+        if (val == null) return;
+        Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 2);
+        Idx += 2;
+    }
+    public uint? GetUInt32(ref int Idx, byte[] buf)
+    {
+        if (buf.Length < Idx + 3) return null;
+        uint ret = BitConverter.ToUInt32(buf, Idx);
+        Idx += 4;
+        return ret;
+    }
+    public void SetUInt32(ref int Idx, byte[] buf, uint? val)
+    {
+        if (val == null) return;
+        Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 4);
+        Idx += 4;
+    }
+    public ulong? GetUInt64(ref int Idx, byte[] buf)
+    {
+        if (buf.Length < Idx + 7) return null;
+        ulong ret = BitConverter.ToUInt64(buf, Idx);
+        Idx += 8;
+        return ret;
+    }
+    public void SetUInt64(ref int Idx, byte[] buf, ulong? val)
+    {
+        if (val == null) return;
+        Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 8);
+        Idx += 8;
+    }
+    public sbyte? Getsbyte(ref int Idx, byte[] buf)
+    {
+        if (buf.Length < Idx) return null;
+        sbyte ret = (sbyte)buf[Idx];
+        Idx += 1;
+        return ret;
+    }
+    public void Setsbyte(ref int Idx, byte[] buf, sbyte? val)
+    {
+        if (val == null) return;
+        Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 1);
+        Idx++;
+    }
+    public short? GetInt16(ref int Idx, byte[] buf)
+    {
+        if (buf.Length < Idx + 1) return null;
+        short ret = BitConverter.ToInt16(buf, Idx);
+        Idx += 2;
+        return ret;
+    }
+    public void SetInt16(ref int Idx, byte[] buf, short? val)
+    {
+        if (val == null) return;
+        Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 2);
+        Idx += 2;
+    }
+    public int? GetInt32(ref int Idx, byte[] buf)
+    {
+        if (buf.Length < Idx + 3) return null;
+        int ret = BitConverter.ToInt32(buf, Idx);
+        Idx += 4;
+        return ret;
+    }
+    public void SetInt32(ref int Idx, byte[] buf, int? val)
+    {
+        if (val == null) return;
+        Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 4);
+        Idx += 4;
+    }
+    public long? GetInt64(ref int Idx, byte[] buf)
+    {
+        if (buf.Length < Idx + 7) return null;
+        long ret = BitConverter.ToInt64(buf, Idx);
+        Idx += 8;
+        return ret;
+    }
+    public void SetInt64(ref int Idx, byte[] buf, long? val)
+    {
+        if (val == null) return;
+        Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 8);
+        Idx += 8;
+    }
 
-        public bool SetRawBytes(byte[] b)
+    public float? GetSingle(ref int Idx, byte[] buf)
+    {
+        if (buf.Length < Idx + 3) return null;
+        float ret = BitConverter.ToSingle(buf, Idx);
+        Idx += 4;
+        return ret;
+    }
+    public void SetSingle(ref int Idx, byte[] buf, float? val)
+    {
+        if (val == null) return;
+        Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 4);
+        Idx += 4;
+    }
+    public double? GetDouble(ref int Idx, byte[] buf)
+    {
+        if (buf.Length < Idx + 7) return null;
+        double ret = BitConverter.ToDouble(buf, Idx);
+        Idx += 8;
+        return ret;
+    }
+    public void SetDouble(ref int Idx, byte[] buf, double? val)
+    {
+        if (val == null) return;
+        Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 8);
+        Idx += 8;
+    }
+    public string GetString(ref int Idx, byte[] buf)
+    {
+        ushort? t = GetUInt16(ref Idx, buf);
+        if (t != null && buf.Length >= Idx + t.Value)
         {
-            int Idx = 0;
+            Encoding iso = Encoding.GetEncoding("ISO-8859-1");
+            string s = iso.GetString(buf, Idx, t.Value);
+            Idx += t.Value;
+            return s;
+        }
+        return null;
+    }
+    public void SetString(ref int Idx, byte[] buf, string val) => throw new Exception();// Not working todaty : buf size change could occure
+    public string GetShortString(ref int Idx, byte[] buf)
+    {
+        byte? t = Getbyte(ref Idx, buf);
+        if (t != null && buf.Length >= Idx + t.Value)
+        {
+            Encoding iso = Encoding.GetEncoding("ISO-8859-1");
+            string s = iso.GetString(buf, Idx, t.Value);
+            Idx += t.Value;
+            return s;
+        }
+        return null;
+    }
+    public void SetShortString(ref int Idx, byte[] buf, string val) => throw new Exception(); // Not working todaty : buf size change could occure
+    public IPAddress GetIPAddress(ref int Idx, byte[] buf)
+    {
+        if (buf.Length < Idx + 3) return null;
 
-            for (int i = 1; i < AttIdMax + 1; i++)
-                DecodeAttr(i, ref Idx, b);
+        byte[] b_ip = new byte[4]; ;
+        Array.Copy(buf, Idx, b_ip, 0, 4);
+        Idx += 4;
+        Array.Reverse(b_ip);
+        return new IPAddress(b_ip);
+    }
 
-            if (Idx < b.Length)
-            {
-                Remain_Undecoded_Bytes = new byte[b.Length - Idx];
-                Array.Copy(b, Idx, Remain_Undecoded_Bytes, 0, Remain_Undecoded_Bytes.Length);
-            }
-            return true;
-        }
+    public PhysicalAddress GetPhysicalAddress(ref int Idx, byte[] buf)
+    {
+        if (buf.Length < Idx + 5) return null;
 
-        public bool GetRawBytes(byte[] b)
-        {
-            int Idx = 0;
+        byte[] b_eth = new byte[6]; ;
+        Array.Copy(buf, Idx, b_eth, 0, 6);
+        Idx += 6;
+        //Array.Reverse(b_ip);
+        return new PhysicalAddress(b_eth);
+    }
 
-            for (int i = 1; i < AttIdMax + 1; i++)
-                EncodeAttr(i, ref Idx, b);
-            if (Idx < b.Length)
-                Array.Copy(Remain_Undecoded_Bytes, 0, b, Idx, Remain_Undecoded_Bytes.Length);
+    #region CustomTypeDescriptor
+    public AttributeCollection GetAttributes() => TypeDescriptor.GetAttributes(this, true);
 
-            return true;
-        }
+    public string GetClassName() => TypeDescriptor.GetClassName(this, true);
 
-        public bool? Getbool(ref int Idx, byte[] buf)
-        {
-            if (buf.Length < Idx) return null;
-            var ret = buf[Idx] == 1;
-            Idx += 1;
-            return ret;
-        }
-        public void Setbool(ref int Idx, byte[] buf, bool? val)
-        {
-            if (val == null) return;
-            Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 1);
-            Idx++;
-        }
-        public byte? Getbyte(ref int Idx, byte[] buf)
-        {
-            if (buf.Length < Idx) return null;
-            var ret = buf[Idx];
-            Idx += 1;
-            return ret;
-        }
-        public void Setbyte(ref int Idx, byte[] buf, byte? val)
-        {
-            if (val == null) return;
-            Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 1);
-            Idx++;
-        }
-        public ushort? GetUInt16(ref int Idx, byte[] buf)
-        {
-            if (buf.Length < Idx + 1) return null;
-            var ret = BitConverter.ToUInt16(buf, Idx);
-            Idx += 2;
-            return ret;
-        }
-        public void SetUInt16(ref int Idx, byte[] buf, ushort? val)
-        {
-            if (val == null) return;
-            Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 2);
-            Idx += 2;
-        }
-        public uint? GetUInt32(ref int Idx, byte[] buf)
-        {
-            if (buf.Length < Idx + 3) return null;
-            var ret = BitConverter.ToUInt32(buf, Idx);
-            Idx += 4;
-            return ret;
-        }
-        public void SetUInt32(ref int Idx, byte[] buf, uint? val)
-        {
-            if (val == null) return;
-            Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 4);
-            Idx += 4;
-        }
-        public ulong? GetUInt64(ref int Idx, byte[] buf)
-        {
-            if (buf.Length < Idx + 7) return null;
-            var ret = BitConverter.ToUInt64(buf, Idx);
-            Idx += 8;
-            return ret;
-        }
-        public void SetUInt64(ref int Idx, byte[] buf, ulong? val)
-        {
-            if (val == null) return;
-            Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 8);
-            Idx += 8;
-        }
-        public sbyte? Getsbyte(ref int Idx, byte[] buf)
-        {
-            if (buf.Length < Idx) return null;
-            var ret = (sbyte)buf[Idx];
-            Idx += 1;
-            return ret;
-        }
-        public void Setsbyte(ref int Idx, byte[] buf, sbyte? val)
-        {
-            if (val == null) return;
-            Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 1);
-            Idx++;
-        }
-        public short? GetInt16(ref int Idx, byte[] buf)
-        {
-            if (buf.Length < Idx + 1) return null;
-            var ret = BitConverter.ToInt16(buf, Idx);
-            Idx += 2;
-            return ret;
-        }
-        public void SetInt16(ref int Idx, byte[] buf, short? val)
-        {
-            if (val == null) return;
-            Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 2);
-            Idx += 2;
-        }
-        public int? GetInt32(ref int Idx, byte[] buf)
-        {
-            if (buf.Length < Idx + 3) return null;
-            var ret = BitConverter.ToInt32(buf, Idx);
-            Idx += 4;
-            return ret;
-        }
-        public void SetInt32(ref int Idx, byte[] buf, int? val)
-        {
-            if (val == null) return;
-            Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 4);
-            Idx += 4;
-        }
-        public long? GetInt64(ref int Idx, byte[] buf)
-        {
-            if (buf.Length < Idx + 7) return null;
-            var ret = BitConverter.ToInt64(buf, Idx);
-            Idx += 8;
-            return ret;
-        }
-        public void SetInt64(ref int Idx, byte[] buf, long? val)
-        {
-            if (val == null) return;
-            Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 8);
-            Idx += 8;
-        }
+    public string GetComponentName() => TypeDescriptor.GetComponentName(this, true);
 
-        public float? GetSingle(ref int Idx, byte[] buf)
-        {
-            if (buf.Length < Idx + 3) return null;
-            var ret = BitConverter.ToSingle(buf, Idx);
-            Idx += 4;
-            return ret;
-        }
-        public void SetSingle(ref int Idx, byte[] buf, float? val)
-        {
-            if (val == null) return;
-            Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 4);
-            Idx += 4;
-        }
-        public double? GetDouble(ref int Idx, byte[] buf)
-        {
-            if (buf.Length < Idx + 7) return null;
-            var ret = BitConverter.ToDouble(buf, Idx);
-            Idx += 8;
-            return ret;
-        }
-        public void SetDouble(ref int Idx, byte[] buf, double? val)
-        {
-            if (val == null) return;
-            Array.Copy(BitConverter.GetBytes(val.Value), 0, buf, Idx, 8);
-            Idx += 8;
-        }
-        public string GetString(ref int Idx, byte[] buf)
-        {
-            ushort? t = GetUInt16(ref Idx, buf);
-            if (t != null && buf.Length >= Idx + t.Value)
-            {
-                Encoding iso = Encoding.GetEncoding("ISO-8859-1");
-                string s = iso.GetString(buf, Idx, t.Value);
-                Idx += t.Value;
-                return s;
-            }
-            return null;
-        }
-        public void SetString(ref int Idx, byte[] buf, string val)
-        {
-            throw new Exception();// Not working todaty : buf size change could occure
-        }
-        public string GetShortString(ref int Idx, byte[] buf)
-        {
-            byte? t = Getbyte(ref Idx, buf);
-            if (t != null && buf.Length >= Idx + t.Value)
-            {
-                Encoding iso = Encoding.GetEncoding("ISO-8859-1");
-                string s = iso.GetString(buf, Idx, t.Value);
-                Idx += t.Value;
-                return s;
-            }
-            return null;
-        }
-        public void SetShortString(ref int Idx, byte[] buf, string val)
-        {
-            throw new Exception(); // Not working todaty : buf size change could occure
-        }
-        public IPAddress GetIPAddress(ref int Idx, byte[] buf)
-        {
-            if (buf.Length < Idx + 3) return null;
+    public TypeConverter GetConverter() => TypeDescriptor.GetConverter(this, true);
 
-            byte[] b_ip = new byte[4]; ;
-            Array.Copy(buf, Idx, b_ip, 0, 4);
-            Idx += 4;
-            Array.Reverse(b_ip);
-            return new IPAddress(b_ip);
-        }
+    public EventDescriptor GetDefaultEvent() => TypeDescriptor.GetDefaultEvent(this, true);
 
-        public PhysicalAddress GetPhysicalAddress(ref int Idx, byte[] buf)
+    public PropertyDescriptor GetDefaultProperty() => TypeDescriptor.GetDefaultProperty(this, true);
+
+    public object GetEditor(Type editorBaseType) => TypeDescriptor.GetEditor(this, editorBaseType, true);
+
+    public EventDescriptorCollection GetEvents(Attribute[] attributes) => TypeDescriptor.GetEvents(this, attributes, true);
+
+    public EventDescriptorCollection GetEvents() => TypeDescriptor.GetEvents(this, true);
+
+    public PropertyDescriptorCollection GetProperties(Attribute[] attributes) => GetProperties();
+
+    public PropertyDescriptorCollection GetProperties()
+    {
+
+        PropertyDescriptorCollection props = TypeDescriptor.GetProperties(this, true);
+
+        // For CIP Attribut we get the class and hides all attributs with
+        // the wrong Id
+        PropertyDescriptor Remain_Undecoded_Bytes_Prop = null;
+        if (FilteredAttribut == -1)
         {
-            if (buf.Length < Idx + 5) return null;
-
-            byte[] b_eth = new byte[6]; ;
-            Array.Copy(buf, Idx, b_eth, 0, 6);
-            Idx += 6;
-            //Array.Reverse(b_ip);
-            return new PhysicalAddress(b_eth);
-        }
-
-        #region CustomTypeDescriptor
-        public AttributeCollection GetAttributes()
-        {
-            return TypeDescriptor.GetAttributes(this, true);
-        }
-
-        public string GetClassName()
-        {
-            return TypeDescriptor.GetClassName(this, true);
-        }
-
-        public string GetComponentName()
-        {
-            return TypeDescriptor.GetComponentName(this, true);
-        }
-
-        public TypeConverter GetConverter()
-        {
-            return TypeDescriptor.GetConverter(this, true);
-        }
-
-        public EventDescriptor GetDefaultEvent()
-        {
-            return TypeDescriptor.GetDefaultEvent(this, true);
-        }
-
-        public PropertyDescriptor GetDefaultProperty()
-        {
-            return TypeDescriptor.GetDefaultProperty(this, true);
-        }
-
-        public object GetEditor(Type editorBaseType)
-        {
-            return TypeDescriptor.GetEditor(this, editorBaseType, true);
-        }
-
-        public EventDescriptorCollection GetEvents(Attribute[] attributes)
-        {
-            return TypeDescriptor.GetEvents(this, attributes, true);
-        }
-
-        public EventDescriptorCollection GetEvents()
-        {
-            return TypeDescriptor.GetEvents(this, true);
-        }
-
-        public PropertyDescriptorCollection GetProperties(Attribute[] attributes)
-        {
-
-            return GetProperties();
-        }
-
-        public PropertyDescriptorCollection GetProperties()
-        {
-
-            PropertyDescriptorCollection props = TypeDescriptor.GetProperties(this, true);
-
-            // For CIP Attribut we get the class and hides all attributs with
-            // the wrong Id
-            PropertyDescriptor Remain_Undecoded_Bytes_Prop = null;
-            if (FilteredAttribut == -1)
-            {
-                // Reorder the list to shows Remain_Undecoded_Bytes at the last index
-                PropertyDescriptor[] reordered = new PropertyDescriptor[props.Count];
-                int i = 0;
-                foreach (PropertyDescriptor p in props)
-                    if (p.Name == "Remain_Undecoded_Bytes")
-                        Remain_Undecoded_Bytes_Prop = p;
-                    else
-                        reordered[i++] = p;
-                reordered[i] = Remain_Undecoded_Bytes_Prop;
-
-                return new PropertyDescriptorCollection(reordered);
-            }
-
-            List<PropertyDescriptor> propsfiltered = new List<PropertyDescriptor>();
+            // Reorder the list to shows Remain_Undecoded_Bytes at the last index
+            PropertyDescriptor[] reordered = new PropertyDescriptor[props.Count];
+            int i = 0;
             foreach (PropertyDescriptor p in props)
-            {
-                Attribute a = p.Attributes[typeof(CIPAttributId)];
-                if (a != null)
-                {
-                    if ((a as CIPAttributId).Id == FilteredAttribut)
-                        propsfiltered.Add(p);
-                }
+                if (p.Name == "Remain_Undecoded_Bytes")
+                    Remain_Undecoded_Bytes_Prop = p;
                 else
-                {
-                    propsfiltered.Add(p); // leave also all not tagged properties
-                }
-            }
-            return new PropertyDescriptorCollection(propsfiltered.ToArray());
+                    reordered[i++] = p;
+            reordered[i] = Remain_Undecoded_Bytes_Prop;
+
+            return new PropertyDescriptorCollection(reordered);
         }
 
-        public object GetPropertyOwner(PropertyDescriptor pd)
+        List<PropertyDescriptor> propsfiltered = [];
+        foreach (PropertyDescriptor p in props)
         {
-            return this;
+            Attribute a = p.Attributes[typeof(CIPAttributId)];
+            if (a != null)
+                if ((a as CIPAttributId).Id == FilteredAttribut)
+                    propsfiltered.Add(p);
+                else
+                    propsfiltered.Add(p); // leave also all not tagged properties
         }
-        #endregion
-
+        return new PropertyDescriptorCollection(propsfiltered.ToArray());
     }
+
+    public object GetPropertyOwner(PropertyDescriptor pd) => this;
+    #endregion
 
 }

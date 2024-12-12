@@ -23,92 +23,87 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 *********************************************************************/
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.ComponentModel;
 using Newtonsoft.Json;
+using System.ComponentModel;
 
-namespace LibEthernetIPStack.ObjectsLibrary
+namespace LibEthernetIPStack.ObjectsLibrary;
+
+// CIP_MessageRouter_class not required, nothing new than in CIPObjectBaseClass
+public class CIP_MessageRouter_class : CIPObjectBaseClass
 {
-    // CIP_MessageRouter_class not required, nothing new than in CIPObjectBaseClass
-    public class CIP_MessageRouter_class : CIPObjectBaseClass
+    public CIP_MessageRouter_class() => AttIdMax = 4;
+    //public override string ToString()
+    //{
+    //    return "class Identity";
+    //}
+    public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b) =>
+        // base decoding, but should be used only for attribut 1 to 7 and 
+        // other decoding for attribut 8 and more
+        base.DecodeAttr(AttrNum, ref Idx, b);
+}
+[JsonObject(MemberSerialization.OptOut)]
+public class CIP_MessageRouter_instance : CIPObject
+{
+    public string Serialized => JsonConvert.SerializeObject(this, new CIPAttributeIdSerializer());
+
+    [TypeConverter(typeof(ExpandableObjectConverter))]
+    public class MessageRouterObjectList
     {
-        public CIP_MessageRouter_class() { AttIdMax = 4; }
-        //public override string ToString()
-        //{
-        //    return "class Identity";
-        //}
-        public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
-        {
-            // base decoding, but should be used only for attribut 1 to 7 and 
-            // other decoding for attribut 8 and more
-            return base.DecodeAttr(AttrNum, ref Idx, b);
-        }
+        public ushort? Number { get; set; }
+        public ushort[] ClassesId { get; set; }
+        public override string ToString() => "";
     }
-    [JsonObject(MemberSerialization.OptOut)]
-    public class CIP_MessageRouter_instance : CIPObject
+
+    [CIPAttributId(1, "Supported Objects")]
+    public MessageRouterObjectList SupportedObjects { get; set; }
+    [CIPAttributId(2, "Max Connections")]
+    public ushort? MaxConnectionsSupported { get; set; }
+    [CIPAttributId(3, "Concurrent Connections")]
+    public ushort? NumberOfCurrentConnections { get; set; }
+    [CIPAttributId(4, "Active Connections")]
+    public ushort[] ActiveConnections { get; set; }
+
+    public CIP_MessageRouter_instance() => AttIdMax = 4;
+
+    //public override string ToString()
+    //{
+    //    if (FilteredAttribut == -1)
+    //        return "MessageRouter instance";
+    //    else
+    //        return "MessageRouter instance attribute #" + FilteredAttribut.ToString();
+    //}
+
+    public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
     {
-        public string Serialized => JsonConvert.SerializeObject(this, new CIPAttributeIdSerializer());
-
-        [TypeConverter(typeof(ExpandableObjectConverter))]
-        public class MessageRouterObjectList
+        switch (AttrNum)
         {
-            public ushort? Number { get; set; }
-            public ushort[] ClassesId { get; set; }
-            public override string ToString() { return ""; }
+            case 1:
+                SupportedObjects = new MessageRouterObjectList
+                {
+                    Number = GetUInt16(ref Idx, b)
+                };
+                SupportedObjects.ClassesId = new ushort[SupportedObjects.Number.Value];
+                for (int i = 0; i < SupportedObjects.Number.Value; i++)
+                    SupportedObjects.ClassesId[i] = GetUInt16(ref Idx, b).Value;
+
+                return true;
+            case 2:
+                MaxConnectionsSupported = GetUInt16(ref Idx, b);
+                return true;
+            case 3:
+                NumberOfCurrentConnections = GetUInt16(ref Idx, b);
+                return true;
+            case 4:
+                if (NumberOfCurrentConnections == null) return false;
+
+                ActiveConnections = new ushort[NumberOfCurrentConnections.Value];
+                for (int i = 0; i < ActiveConnections.Length; i++)
+                {
+                    ActiveConnections[i] = GetUInt16(ref Idx, b).Value;
+                }
+                return true;
+
         }
-
-        [CIPAttributId(1, "Supported Objects")]
-        public MessageRouterObjectList SupportedObjects { get; set; }
-        [CIPAttributId(2, "Max Connections")]
-        public ushort? MaxConnectionsSupported { get; set; }
-        [CIPAttributId(3, "Concurrent Connections")]
-        public ushort? NumberOfCurrentConnections { get; set; }
-        [CIPAttributId(4, "Active Connections")]
-        public ushort[] ActiveConnections { get; set; }
-
-        public CIP_MessageRouter_instance() { AttIdMax = 4; }
-
-        //public override string ToString()
-        //{
-        //    if (FilteredAttribut == -1)
-        //        return "MessageRouter instance";
-        //    else
-        //        return "MessageRouter instance attribute #" + FilteredAttribut.ToString();
-        //}
-
-        public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
-        {
-            switch (AttrNum)
-            {
-                case 1:
-                    SupportedObjects = new MessageRouterObjectList();
-                    SupportedObjects.Number = GetUInt16(ref Idx, b);
-                    SupportedObjects.ClassesId = new ushort[SupportedObjects.Number.Value];
-                    for (int i = 0; i < SupportedObjects.Number.Value; i++)
-                        SupportedObjects.ClassesId[i] = GetUInt16(ref Idx, b).Value;
-
-                    return true;
-                case 2:
-                    MaxConnectionsSupported = GetUInt16(ref Idx, b);
-                    return true;
-                case 3:
-                    NumberOfCurrentConnections = GetUInt16(ref Idx, b);
-                    return true;
-                case 4:
-                    if (NumberOfCurrentConnections == null) return false;
-
-                    ActiveConnections = new ushort[NumberOfCurrentConnections.Value];
-                    for (int i = 0; i < ActiveConnections.Length; i++)
-                    {
-                        ActiveConnections[i] = GetUInt16(ref Idx, b).Value;
-                    }
-                    return true;
-
-            }
-            return false;
-        }
-
+        return false;
     }
 }

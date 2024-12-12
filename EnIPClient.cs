@@ -23,6 +23,7 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 *********************************************************************/
+using LibEthernetIPStack.Implicit;
 using LibEthernetIPStack.Shared;
 using System;
 using System.Diagnostics;

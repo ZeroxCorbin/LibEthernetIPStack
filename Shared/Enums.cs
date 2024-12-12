@@ -26,7 +26,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace LibEthernetIPStack
+namespace LibEthernetIPStack.Shared
 {
 
     [JsonConverter(typeof(StringEnumConverter))]
@@ -286,4 +286,9 @@ namespace LibEthernetIPStack
         REAL, //=0xCA,
         LREAL, //=0xCB
     }
+
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum EnIPNetworkStatus { OnLine, OnLineReadRejected, OnLineWriteRejected, OnLineForwardOpenReject, OffLine };
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum EnIPForwardOpenStatus { ForwardOpen, ForwardClose };
 }

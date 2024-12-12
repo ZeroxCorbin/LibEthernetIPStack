@@ -23,101 +23,94 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 *********************************************************************/
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.ComponentModel;
 using Newtonsoft.Json;
+using System.ComponentModel;
 
-namespace LibEthernetIPStack.ObjectsLibrary
+namespace LibEthernetIPStack.ObjectsLibrary;
+
+// CIP_Identity_class not required, nothing new than in CIPObjectBaseClass
+// but implemented here to show how it should be done if additional attribut are present
+[JsonObject(MemberSerialization.OptOut)]
+public class CIP_Identity_class : CIPObjectBaseClass
 {
-    // CIP_Identity_class not required, nothing new than in CIPObjectBaseClass
-    // but implemented here to show how it should be done if additional attribut are present
-    [JsonObject(MemberSerialization.OptOut)]
-    public class CIP_Identity_class : CIPObjectBaseClass
+    public CIP_Identity_class() => AttIdMax = 7;
+    //public override string ToString()
+    //{
+    //    return "class Identity";
+    //}
+    public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b) =>
+        // base decoding, but should be used only for attribut 1 to 7 and 
+        // other decoding for attribut 8 and more
+        base.DecodeAttr(AttrNum, ref Idx, b);
+}
+[JsonObject(MemberSerialization.OptOut)]
+public class CIP_Identity_instance : CIPObject
+{
+    public string Serialized => JsonConvert.SerializeObject(this, new CIPAttributeIdSerializer());
+
+    [TypeConverter(typeof(ExpandableObjectConverter))]
+    public class IdentityRevision
     {
-        public CIP_Identity_class() { AttIdMax = 7; }
-        //public override string ToString()
-        //{
-        //    return "class Identity";
-        //}
-        public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
-        {
-            // base decoding, but should be used only for attribut 1 to 7 and 
-            // other decoding for attribut 8 and more
-            return base.DecodeAttr(AttrNum, ref Idx, b);
-        }
+        public byte? Major_Revision { get; set; }
+        public byte? Minor_Revision { get; set; }
+        public override string ToString() => $"{Major_Revision}.{Minor_Revision}";
     }
-    [JsonObject(MemberSerialization.OptOut)]
-    public class CIP_Identity_instance : CIPObject
+
+    [CIPAttributId(1, "Vendor ID")]
+    public ushort? Vendor_ID { get; set; }
+    [CIPAttributId(2, "Device Type")]
+    public ushort? Device_Type { get; set; }
+    [CIPAttributId(3, "Product Code")]
+    public ushort? Product_Code { get; set; }
+    [CIPAttributId(4, "Revision")]
+    public IdentityRevision Revision { get; set; }
+    [CIPAttributId(5, "Status")]
+    public ushort? Status { get; set; }
+    [CIPAttributId(6, "Serial Number")]
+    public uint? Serial_Number { get; set; }
+    [CIPAttributId(7, "Product Name")]
+    public string Product_Name { get; set; }
+
+    public CIP_Identity_instance() => AttIdMax = 7;
+
+    //public override string ToString()
+    //{
+    //    if (FilteredAttribut == -1)
+    //        return "Identity instance";
+    //    else
+    //        return "Identity instance attribute #" + FilteredAttribut.ToString();
+    //}
+    public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
     {
-        public string Serialized => JsonConvert.SerializeObject(this, new CIPAttributeIdSerializer());
-
-        [TypeConverter(typeof(ExpandableObjectConverter))]
-        public class IdentityRevision
+        switch (AttrNum)
         {
-            public byte? Major_Revision { get; set; }
-            public byte? Minor_Revision { get; set; }
-            public override string ToString() { return $"{Major_Revision}.{Minor_Revision}"; }
+            case 1:
+                Vendor_ID = GetUInt16(ref Idx, b);
+                return true;
+            case 2:
+                Device_Type = GetUInt16(ref Idx, b);
+                return true;
+            case 3:
+                Product_Code = GetUInt16(ref Idx, b);
+                return true;
+            case 4:
+                Revision = new IdentityRevision
+                {
+                    Major_Revision = Getbyte(ref Idx, b),
+                    Minor_Revision = Getbyte(ref Idx, b)
+                };
+                return true;
+            case 5:
+                Status = GetUInt16(ref Idx, b);
+                return true;
+            case 6:
+                Serial_Number = GetUInt32(ref Idx, b);
+                return true;
+            case 7:
+                Product_Name = GetShortString(ref Idx, b);
+                return true;
         }
 
-        [CIPAttributId(1, "Vendor ID")]
-        public ushort? Vendor_ID { get; set; }
-        [CIPAttributId(2, "Device Type")]
-        public ushort? Device_Type { get; set; }
-        [CIPAttributId(3, "Product Code")]
-        public ushort? Product_Code { get; set; }
-        [CIPAttributId(4, "Revision")]
-        public IdentityRevision Revision { get; set; }
-        [CIPAttributId(5, "Status")]
-        public ushort? Status { get; set; }
-        [CIPAttributId(6, "Serial Number")]
-        public uint? Serial_Number { get; set; }
-        [CIPAttributId(7, "Product Name")]
-        public string Product_Name { get; set; }
-
-
-        public CIP_Identity_instance() { AttIdMax = 7; }
-
-        //public override string ToString()
-        //{
-        //    if (FilteredAttribut == -1)
-        //        return "Identity instance";
-        //    else
-        //        return "Identity instance attribute #" + FilteredAttribut.ToString();
-        //}
-        public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
-        {
-            switch (AttrNum)
-            {
-                case 1:
-                    Vendor_ID = GetUInt16(ref Idx, b);
-                    return true;
-                case 2:
-                    Device_Type = GetUInt16(ref Idx, b);
-                    return true;
-                case 3:
-                    Product_Code = GetUInt16(ref Idx, b);
-                    return true;
-                case 4:
-                    Revision = new IdentityRevision
-                    {
-                        Major_Revision = Getbyte(ref Idx, b),
-                        Minor_Revision = Getbyte(ref Idx, b)
-                    };
-                    return true;
-                case 5:
-                    Status = GetUInt16(ref Idx, b);
-                    return true;
-                case 6:
-                    Serial_Number = GetUInt32(ref Idx, b);
-                    return true;
-                case 7:
-                    Product_Name = GetShortString(ref Idx, b);
-                    return true;
-            }
-
-            return false;
-        }
+        return false;
     }
 }
