@@ -23,6 +23,7 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 *********************************************************************/
+using LibEthernetIPStack.Base;
 using System.Net;
 
 namespace LibEthernetIPStack;

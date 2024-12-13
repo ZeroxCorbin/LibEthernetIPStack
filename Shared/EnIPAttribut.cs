@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LibEthernetIPStack.Base;
+using System;
 using System.Net;
 
 namespace LibEthernetIPStack.Shared;

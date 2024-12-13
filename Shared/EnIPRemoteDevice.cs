@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using LibEthernetIPStack.Base;
 using LibEthernetIPStack.Explicit;
 using LibEthernetIPStack.Implicit;
 using Newtonsoft.Json;
@@ -262,9 +263,8 @@ public partial class EnIPRemoteDevice : ObservableObject, IDisposable
 
             int ret;
             Encapsulation_Packet rep;
-            int Offset;
             lock (LockTransaction)
-                ret = Tcpclient.SendReceive(p, out rep, out Offset, ref packet);
+                ret = Tcpclient.SendReceive(p, out rep, out int Offset, ref packet);
 
             if (ret == 28)
                 if (rep.IsOK)
@@ -311,10 +311,9 @@ public partial class EnIPRemoteDevice : ObservableObject, IDisposable
 
             string o = Service.ToString() + " : " + ErrorMsg + " - Node " + EnIPPath.GetPath(DataPath) + " - Endpoint " + ep.ToString();
 
-            if (ErrorMsg == "TCP Error")
-                return UpdateStatus(EnIPNetworkStatus.OffLine, o);
-
-            return Service == CIPServiceCodes.SetAttributeSingle
+            return ErrorMsg == "TCP Error"
+                ? UpdateStatus(EnIPNetworkStatus.OffLine, o)
+                : Service == CIPServiceCodes.SetAttributeSingle
                 ? UpdateStatus(EnIPNetworkStatus.OnLineWriteRejected, o)
                 : UpdateStatus(EnIPNetworkStatus.OnLineReadRejected, o);
         }

@@ -1,4 +1,5 @@
-﻿using LibEthernetIPStack.ObjectsLibrary;
+﻿using LibEthernetIPStack.Base;
+using LibEthernetIPStack.ObjectsLibrary;
 using System;
 using System.IO;
 using System.Reflection;

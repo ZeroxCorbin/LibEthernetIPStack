@@ -24,20 +24,33 @@
 *
 *********************************************************************/
 using LibEthernetIPStack.Shared;
-using Newtonsoft.Json;
 using System;
-using System.Diagnostics;
-using System.Net;
-using System.Text;
 
-namespace LibEthernetIPStack;
+namespace LibEthernetIPStack.Base;
 
+public class ForwardClose_Packet
+{
+    private ForwardOpen_Packet OrignalPkt;
 
+    public EnIPAttribut T2O { get; private set; }
 
-
-
-
-
-
-
-
+    public ForwardClose_Packet(ForwardOpen_Packet FwOpen, EnIPAttribut T2O)
+    {
+        OrignalPkt = FwOpen;
+        this.T2O = T2O;
+    }
+    // by now only use for request
+    public byte[] toByteArray()
+    {
+        byte[] fwclose = new byte[12 + (OrignalPkt.Connection_Path_Size * 2)];
+        fwclose[0] = OrignalPkt.Priority_TimeTick;
+        fwclose[1] = OrignalPkt.Timeout_Ticks;
+        Array.Copy(BitConverter.GetBytes(OrignalPkt.ConnectionSerialNumber), 0, fwclose, 2, 2);
+        Array.Copy(BitConverter.GetBytes(ForwardOpen_Packet.OriginatorVendorId), 0, fwclose, 4, 2);
+        Array.Copy(BitConverter.GetBytes(ForwardOpen_Packet.OriginatorSerialNumber), 0, fwclose, 6, 4);
+        fwclose[10] = OrignalPkt.Connection_Path_Size;
+        fwclose[11] = 0;
+        Array.Copy(OrignalPkt.Connection_Path, 0, fwclose, 12, OrignalPkt.Connection_Path.Length);
+        return fwclose;
+    }
+}
