@@ -22,6 +22,7 @@
 *
 *********************************************************************/
 using LibEthernetIPStack.Base;
+using LibEthernetIPStack.Shared;
 using System;
 using System.Diagnostics;
 using System.Net;
@@ -39,11 +40,9 @@ public class EnIPUDPTransport
 
     private UdpClient m_exclusive_conn;
 
-    public EnIPUDPTransport(string Local_IP, int Port)
+    public EnIPUDPTransport(string Local_IP, int Port) : this(new IPEndPoint(!string.IsNullOrEmpty(Local_IP) ? IPAddress.Parse(Local_IP) : IPAddress.Any, Port)) { }
+    public EnIPUDPTransport(EndPoint ep)
     {
-        EndPoint ep = new IPEndPoint(IPAddress.Any, Port);
-        if (!string.IsNullOrEmpty(Local_IP)) ep = new IPEndPoint(IPAddress.Parse(Local_IP), Port);
-
         m_exclusive_conn = new UdpClient(AddressFamily.InterNetwork);
         m_exclusive_conn.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
         m_exclusive_conn.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, false);
@@ -53,11 +52,12 @@ public class EnIPUDPTransport
         _ = m_exclusive_conn.BeginReceive(OnReceiveData, m_exclusive_conn);
     }
 
-    public void JoinMulticastGroup(string IPMulti)
+    public void JoinMulticastGroup(string IPMulti) => JoinMulticastGroup(IPAddress.Parse(IPMulti));
+    public void JoinMulticastGroup(IPAddress IPMulti)
     {
         try
         {
-            m_exclusive_conn.JoinMulticastGroup(IPAddress.Parse(IPMulti));
+            m_exclusive_conn.JoinMulticastGroup(IPMulti);
         }
         catch { }
     }
@@ -65,8 +65,8 @@ public class EnIPUDPTransport
     private void OnReceiveData(IAsyncResult asyncResult)
     {
         UdpClient conn = (UdpClient)asyncResult.AsyncState;
-        try
-        {
+        //try
+        //{
             IPEndPoint ep = new(IPAddress.Any, 0);
             byte[] local_buffer;
             int rx = 0;
@@ -106,25 +106,25 @@ public class EnIPUDPTransport
                         ItemMessageReceived(this, local_buffer, Itempacket, Offset, rx, ep);
                 }
             }
-            catch (Exception ex)
-            {
-                Trace.TraceError("Exception in udp recieve: " + ex.Message);
-            }
+            //catch (Exception ex)
+            //{
+            //    Trace.TraceError("Exception in udp recieve: " + ex.Message);
+            //}
             finally
             {
                 //restart data receive
                 _ = conn.BeginReceive(OnReceiveData, conn);
             }
-        }
-        catch (Exception ex)
-        {
-            //restart data receive
-            if (conn.Client != null)
-            {
-                Trace.TraceError("Exception in Ip OnRecieveData: " + ex.Message);
-                _ = conn.BeginReceive(OnReceiveData, conn);
-            }
-        }
+        //}
+        //catch (Exception ex)
+        //{
+        //    //restart data receive
+        //    if (conn.Client != null)
+        //    {
+        //        Trace.TraceError("Exception in Ip OnRecieveData: " + ex.Message);
+        //        _ = conn.BeginReceive(OnReceiveData, conn);
+        //    }
+        //}
     }
 
     public void Send(Encapsulation_Packet Packet, IPEndPoint ep)

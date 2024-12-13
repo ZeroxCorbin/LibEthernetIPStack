@@ -23,10 +23,12 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 *********************************************************************/
+using LibEthernetIPStack.Shared;
 using Newtonsoft.Json;
 using System.ComponentModel;
+using System.Linq;
 
-namespace LibEthernetIPStack.ObjectsLibrary;
+namespace LibEthernetIPStack.CIP;
 
 // CIP_Identity_class not required, nothing new than in CIPObjectBaseClass
 // but implemented here to show how it should be done if additional attribut are present
@@ -112,5 +114,23 @@ public class CIP_Identity_instance : CIPObject
         }
 
         return false;
+    }
+
+    public byte[] EncodeAttr()
+    {
+        byte[] b = new byte[256];
+        int Idx = 0;
+        SetUInt16(ref Idx, b, Vendor_ID);
+        SetUInt16(ref Idx, b, Device_Type);
+        SetUInt16(ref Idx, b, Product_Code);
+        Setbyte(ref Idx, b, Revision.Major_Revision);
+        Setbyte(ref Idx, b, Revision.Minor_Revision);
+        SetUInt16(ref Idx, b, Status);
+        SetUInt32(ref Idx, b, Serial_Number);
+        SetShortString(ref Idx, b, Product_Name);
+        Setbyte(ref Idx, b, (byte)IdentityObjectState.Operational);
+
+        var ret = b.Length > Idx ? b.Take(Idx).ToArray() : b;
+        return ret;
     }
 }

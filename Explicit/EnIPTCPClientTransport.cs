@@ -36,7 +36,7 @@ public class EnIPTCPClientTransport
 
     public EnIPTCPClientTransport(int Timeout) => this.Timeout = Timeout;
 
-    public bool IsConnected() => Tcpclient != null && Tcpclient.Connected;
+    public bool IsConnected => Tcpclient != null && Tcpclient.Connected;
 
     private ManualResetEvent ConnectedEvAndLock = new(false);
 
@@ -44,7 +44,7 @@ public class EnIPTCPClientTransport
     private void On_ConnectedACK(object sender, SocketAsyncEventArgs e) => ConnectedEvAndLock.Set();
     public bool Connect(IPEndPoint ep)
     {
-        if (IsConnected()) return true;
+        if (IsConnected) return true;
         try
         {
             Tcpclient = new TcpClient

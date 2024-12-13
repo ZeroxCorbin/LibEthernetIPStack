@@ -28,7 +28,7 @@ using Newtonsoft.Json;
 using System;
 using System.ComponentModel;
 
-namespace LibEthernetIPStack.ObjectsLibrary;
+namespace LibEthernetIPStack.CIP;
 
 // CIP_TCPIPInterface_class not required, nothing new than in CIPObjectBaseClass
 public class CIP_TCPIPInterface_class : CIPObjectBaseClass

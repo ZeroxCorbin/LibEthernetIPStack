@@ -13,7 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace LibEthernetIPStack.Shared;
-public partial class EnIPRemoteDevice : ObservableObject, IDisposable
+public partial class EnIPProducerDevice : ObservableObject, IDisposable
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -131,7 +131,7 @@ public partial class EnIPRemoteDevice : ObservableObject, IDisposable
     // This constuctor is used with the ListIdentity response buffer
     // No local endpoint given here, the TCP/IP stack should do the job
     // if more than one interface is present
-    public EnIPRemoteDevice(IPEndPoint ep, int TcpTimeout, byte[] DataArray, Encapsulation_Packet encapsulation, ref int Offset)
+    public EnIPProducerDevice(IPEndPoint ep, int TcpTimeout, byte[] DataArray, Encapsulation_Packet encapsulation, ref int Offset)
     {
         this.ep = ep;
         IdentityEncapPacket = encapsulation;
@@ -140,11 +140,11 @@ public partial class EnIPRemoteDevice : ObservableObject, IDisposable
         FromListIdentityResponse(DataArray, ref Offset);
     }
 
-    public EnIPRemoteDevice() => Tcpclient = new EnIPTCPClientTransport(100);
+    public EnIPProducerDevice() => Tcpclient = new EnIPTCPClientTransport(100);
 
     public void Dispose()
     {
-        if (IsConnected())
+        if (IsConnected)
             Disconnect();
     }
 
@@ -166,7 +166,7 @@ public partial class EnIPRemoteDevice : ObservableObject, IDisposable
 
     public void Class1SendO2T(SequencedAddressItem Item) => UdpListener?.Send(Item, epUdp);
 
-    public void CopyData(EnIPRemoteDevice newset)
+    public void CopyData(EnIPProducerDevice newset)
     {
         DataLength = newset.DataLength;
         EncapsulationVersion = newset.EncapsulationVersion;
@@ -184,13 +184,13 @@ public partial class EnIPRemoteDevice : ObservableObject, IDisposable
     // Certainly here if SocketAddress is fullfil it could be the
     // value to test
     // FIXME if you know.
-    public bool Equals(EnIPRemoteDevice other) => ep.Equals(other.ep);
+    public bool Equals(EnIPProducerDevice other) => ep.Equals(other.ep);
 
-    public bool IsConnected() => Tcpclient.IsConnected();
+    public bool IsConnected => Tcpclient.IsConnected;
 
     public bool Connect()
     {
-        if (Tcpclient.IsConnected() == true) return true;
+        if (Tcpclient.IsConnected == true) return true;
 
         SessionHandle = 0;
 
@@ -214,7 +214,7 @@ public partial class EnIPRemoteDevice : ObservableObject, IDisposable
 
         try
         {
-            if (Tcpclient.IsConnected())
+            if (Tcpclient.IsConnected)
             {
                 Encapsulation_Packet p = new(EncapsulationCommands.ListIdentity)
                 {
@@ -256,7 +256,7 @@ public partial class EnIPRemoteDevice : ObservableObject, IDisposable
     {
         if (autoConnect) _ = Connect();
 
-        if (Tcpclient.IsConnected() == true && SessionHandle == 0)
+        if (Tcpclient.IsConnected == true && SessionHandle == 0)
         {
             byte[] b = new byte[] { 1, 0, 0, 0 };
             Encapsulation_Packet p = new(EncapsulationCommands.RegisterSession, 0, b);

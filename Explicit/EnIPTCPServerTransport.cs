@@ -22,6 +22,7 @@
 *
 *********************************************************************/
 using LibEthernetIPStack.Base;
+using LibEthernetIPStack.Shared;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -38,6 +39,9 @@ public class EnIPTCPServerTransport
 
     private List<TcpClient> ClientsList = [];
 
+    public bool IsListening { get; private set; } = false;
+    public bool HasClients => ClientsList.Count > 0;
+
     public EnIPTCPServerTransport()
     {
         tcpListener = new TcpListener(IPAddress.Any, 0xAF12);
@@ -53,7 +57,7 @@ public class EnIPTCPServerTransport
         try
         {
             tcpListener.Start();
-
+            IsListening = true;
             for (; ; )
             {
                 // Blocking
@@ -72,6 +76,7 @@ public class EnIPTCPServerTransport
         }
         catch
         {
+            IsListening = false;
             Trace.TraceError("Fatal Error in Tcp Listener Thread");
         }
     }

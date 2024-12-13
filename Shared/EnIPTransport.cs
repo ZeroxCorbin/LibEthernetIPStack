@@ -23,21 +23,11 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 *********************************************************************/
-using LibEthernetIPStack.Shared;
-using Newtonsoft.Json;
-using System;
-using System.Diagnostics;
+using LibEthernetIPStack.Base;
 using System.Net;
-using System.Text;
 
-namespace LibEthernetIPStack;
+namespace LibEthernetIPStack.Shared;
 
-
-
-
-
-
-
-
-
+public delegate void EncapMessageReceivedHandler(object sender, byte[] packet, Encapsulation_Packet EncapPacket, int offset, int msg_length, IPEndPoint remote_address);
+public delegate void ItemMessageReceivedHandler(object sender, byte[] packet, SequencedAddressItem ItemPacket, int offset, int msg_length, IPEndPoint remote_address);
 

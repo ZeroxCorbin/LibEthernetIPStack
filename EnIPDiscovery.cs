@@ -32,7 +32,13 @@ using System.Net;
 
 namespace LibEthernetIPStack;
 
-public class EnIPServer
+public delegate void DeviceArrivalHandler(EnIPProducerDevice device);
+
+// Device data dictionnary top hierarchy 
+
+public delegate void T2OEventHandler(EnIPAttribut sender);
+
+public class EnIPDiscovery
 {
     public EnIPUDPTransport udp;
     private int TcpTimeout;
@@ -42,7 +48,7 @@ public class EnIPServer
     // Local endpoint is important for broadcast messages
     // When more than one interface are present, broadcast
     // requests are sent on the first one, not all !
-    public EnIPServer(string End_point, int TcpTimeout = 100)
+    public EnIPDiscovery(string End_point, int TcpTimeout = 100)
     {
         this.TcpTimeout = TcpTimeout;
         udp = new EnIPUDPTransport(End_point, 0);
@@ -61,7 +67,7 @@ public class EnIPServer
                 offset += 2;
                 for (int i = 0; i < NbDevices; i++)
                 {
-                    EnIPRemoteDevice device = new EnIPRemoteDevice(remote_address, TcpTimeout, packet, EncapPacket, ref offset);
+                    EnIPProducerDevice device = new(remote_address, TcpTimeout, packet, EncapPacket, ref offset);
                     DeviceArrival(device);
                 }
             }
@@ -81,4 +87,5 @@ public class EnIPServer
     // Broadcast ListIdentity
     public void DiscoverServers() => DiscoverServers(udp.GetBroadcastAddress());
 }
+
 

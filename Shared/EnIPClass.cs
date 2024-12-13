@@ -1,5 +1,5 @@
 ﻿using LibEthernetIPStack.Base;
-using LibEthernetIPStack.ObjectsLibrary;
+using LibEthernetIPStack.CIP;
 using System;
 using System.IO;
 using System.Reflection;
@@ -9,7 +9,7 @@ public class EnIPClass : EnIPCIPObject
 {
     private Type DecoderClass;
 
-    public EnIPClass(EnIPRemoteDevice RemoteDevice, ushort Id, Type? DecoderClass = null)
+    public EnIPClass(EnIPProducerDevice RemoteDevice, ushort Id, Type? DecoderClass = null)
     {
         this.Id = Id;
         this.RemoteDevice = RemoteDevice;
@@ -73,7 +73,7 @@ public class EnIPClass : EnIPCIPObject
                         if (DecoderClass == null)
                         {
                             // try to create the associated class object
-                            DecodedMembers = (CIPObject)Activator.CreateInstance(Assembly.GetExecutingAssembly().GetType("LibEthernetIPStack.ObjectsLibrary.CIP_" + classid.ToString() + "_class"));
+                            DecodedMembers = (CIPObject)Activator.CreateInstance(Assembly.GetExecutingAssembly().GetType("LibEthernetIPStack.CIP.CIP_" + classid.ToString() + "_class"));
                             //DecodedMembers = new CIPObjectBaseClass(classid.ToString());
                         }
                         else

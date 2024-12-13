@@ -1,5 +1,5 @@
 ﻿using LibEthernetIPStack.Base;
-using LibEthernetIPStack.ObjectsLibrary;
+using LibEthernetIPStack.CIP;
 using System;
 using System.Reflection;
 
@@ -52,7 +52,7 @@ public class EnIPInstance : EnIPCIPObject
         {
             if (DecoderClass == null)
             {
-                DecodedMembers = (CIPObject)Activator.CreateInstance(Assembly.GetExecutingAssembly().GetType("LibEthernetIPStack.ObjectsLibrary.CIP_" + classid.ToString() + "_instance"));
+                DecodedMembers = (CIPObject)Activator.CreateInstance(Assembly.GetExecutingAssembly().GetType("LibEthernetIPStack.CIP.CIP_" + classid.ToString() + "_instance"));
                 //DecodedMembers = (CIPObject)o.Unwrap();
                 //DecodedMembers = new CIPObjectBaseClass(classid.ToString());
             }

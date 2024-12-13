@@ -26,7 +26,7 @@
 using Newtonsoft.Json;
 using System;
 
-namespace LibEthernetIPStack.ObjectsLibrary;
+namespace LibEthernetIPStack.CIP;
 
 [JsonObject(MemberSerialization.OptOut)]
 // Common class attribut : 4-4.1 Class Attributes

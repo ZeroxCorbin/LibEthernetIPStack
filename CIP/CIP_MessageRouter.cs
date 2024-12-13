@@ -24,14 +24,14 @@
 *
 *********************************************************************/
 using Newtonsoft.Json;
+using System.ComponentModel;
 
-namespace LibEthernetIPStack.ObjectsLibrary;
+namespace LibEthernetIPStack.CIP;
 
-
-// CIP_DLR_class not required, nothing new than in CIPObjectBaseClass
-public class CIP_DLR_class : CIPObjectBaseClass
+// CIP_MessageRouter_class not required, nothing new than in CIPObjectBaseClass
+public class CIP_MessageRouter_class : CIPObjectBaseClass
 {
-    public CIP_DLR_class() => AttIdMax = 4;
+    public CIP_MessageRouter_class() => AttIdMax = 4;
     //public override string ToString()
     //{
     //    return "class Identity";
@@ -42,27 +42,35 @@ public class CIP_DLR_class : CIPObjectBaseClass
         base.DecodeAttr(AttrNum, ref Idx, b);
 }
 [JsonObject(MemberSerialization.OptOut)]
-public class CIP_DLR_instance : CIPObject
+public class CIP_MessageRouter_instance : CIPObject
 {
-    [CIPAttributId(1)]
-    public byte? Network_Topology { get; set; }
-    [CIPAttributId(2)]
-    public byte? Network_Status { get; set; }
-    [CIPAttributId(3)]
-    public string Active_Supervisor_IPAddress { get; set; }
-    [CIPAttributId(4)]
-    public string Active_Supervisor_PhysicalAddress { get; set; }
-    [CIPAttributId(5)]
-    public uint? Capability_Flag { get; set; }
+    public string Serialized => JsonConvert.SerializeObject(this, new CIPAttributeIdSerializer());
 
-    public CIP_DLR_instance() => AttIdMax = 5;
+    [TypeConverter(typeof(ExpandableObjectConverter))]
+    public class MessageRouterObjectList
+    {
+        public ushort? Number { get; set; }
+        public ushort[] ClassesId { get; set; }
+        public override string ToString() => "";
+    }
+
+    [CIPAttributId(1, "Supported Objects")]
+    public MessageRouterObjectList SupportedObjects { get; set; }
+    [CIPAttributId(2, "Max Connections")]
+    public ushort? MaxConnectionsSupported { get; set; }
+    [CIPAttributId(3, "Concurrent Connections")]
+    public ushort? NumberOfCurrentConnections { get; set; }
+    [CIPAttributId(4, "Active Connections")]
+    public ushort[] ActiveConnections { get; set; }
+
+    public CIP_MessageRouter_instance() => AttIdMax = 4;
 
     //public override string ToString()
     //{
     //    if (FilteredAttribut == -1)
-    //        return "DLR instance";
+    //        return "MessageRouter instance";
     //    else
-    //        return "DLR instance attribute #" + FilteredAttribut.ToString();
+    //        return "MessageRouter instance attribute #" + FilteredAttribut.ToString();
     //}
 
     public override bool DecodeAttr(int AttrNum, ref int Idx, byte[] b)
@@ -70,20 +78,31 @@ public class CIP_DLR_instance : CIPObject
         switch (AttrNum)
         {
             case 1:
-                Network_Topology = Getbyte(ref Idx, b);
+                SupportedObjects = new MessageRouterObjectList
+                {
+                    Number = GetUInt16(ref Idx, b)
+                };
+                SupportedObjects.ClassesId = new ushort[SupportedObjects.Number.Value];
+                for (int i = 0; i < SupportedObjects.Number.Value; i++)
+                    SupportedObjects.ClassesId[i] = GetUInt16(ref Idx, b).Value;
+
                 return true;
             case 2:
-                Network_Status = Getbyte(ref Idx, b);
+                MaxConnectionsSupported = GetUInt16(ref Idx, b);
                 return true;
             case 3:
-                Active_Supervisor_IPAddress = GetIPAddress(ref Idx, b).ToString();
+                NumberOfCurrentConnections = GetUInt16(ref Idx, b);
                 return true;
             case 4:
-                Active_Supervisor_PhysicalAddress = GetPhysicalAddress(ref Idx, b).ToString();
+                if (NumberOfCurrentConnections == null) return false;
+
+                ActiveConnections = new ushort[NumberOfCurrentConnections.Value];
+                for (int i = 0; i < ActiveConnections.Length; i++)
+                {
+                    ActiveConnections[i] = GetUInt16(ref Idx, b).Value;
+                }
                 return true;
-            case 5:
-                Capability_Flag = GetUInt32(ref Idx, b);
-                return true;
+
         }
         return false;
     }

@@ -26,7 +26,7 @@
 using Newtonsoft.Json;
 using System.ComponentModel;
 
-namespace LibEthernetIPStack.ObjectsLibrary;
+namespace LibEthernetIPStack.CIP;
 
 // CIP_EtherNetLink_class not required, nothing new than in CIPObjectBaseClass
 public class CIP_EtherNetLink_class : CIPObjectBaseClass

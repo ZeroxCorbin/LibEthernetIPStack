@@ -31,7 +31,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Text;
 
-namespace LibEthernetIPStack.ObjectsLibrary;
+namespace LibEthernetIPStack.CIP;
 
 public class CIPAttributId : Attribute
 {
@@ -239,7 +239,15 @@ public abstract class CIPObject
         }
         return null;
     }
-    public void SetString(ref int Idx, byte[] buf, string val) => throw new Exception();// Not working todaty : buf size change could occure
+    public void SetString(ref int Idx, byte[] buf, string val)
+    {
+        if (val == null) return;
+        Encoding iso = Encoding.GetEncoding("ISO-8859-1");
+        byte[] b = iso.GetBytes(val);
+        SetUInt16(ref Idx, buf, (ushort)b.Length);
+        Array.Copy(b, 0, buf, Idx, b.Length);
+        Idx += b.Length;
+    }
     public string GetShortString(ref int Idx, byte[] buf)
     {
         byte? t = Getbyte(ref Idx, buf);
@@ -252,7 +260,16 @@ public abstract class CIPObject
         }
         return null;
     }
-    public void SetShortString(ref int Idx, byte[] buf, string val) => throw new Exception(); // Not working todaty : buf size change could occure
+    public void SetShortString(ref int Idx, byte[] buf, string val)
+    {
+        if (val == null) return;
+        Encoding iso = Encoding.GetEncoding("ISO-8859-1");
+        byte[] b = iso.GetBytes(val);
+        if (b.Length > 255) throw new Exception("String too long");
+        Setbyte(ref Idx, buf, (byte)b.Length);
+        Array.Copy(b, 0, buf, Idx, b.Length);
+        Idx += b.Length;
+    }
     public IPAddress GetIPAddress(ref int Idx, byte[] buf)
     {
         if (buf.Length < Idx + 3) return null;
@@ -262,6 +279,14 @@ public abstract class CIPObject
         Idx += 4;
         Array.Reverse(b_ip);
         return new IPAddress(b_ip);
+    }
+    public void SetIPAddress(ref int Idx, byte[] buf, IPAddress val)
+    {
+        if (val == null) return;
+        byte[] b_ip = val.GetAddressBytes();
+        Array.Reverse(b_ip);
+        Array.Copy(b_ip, 0, buf, Idx, 4);
+        Idx += 4;
     }
 
     public PhysicalAddress GetPhysicalAddress(ref int Idx, byte[] buf)
@@ -273,6 +298,14 @@ public abstract class CIPObject
         Idx += 6;
         //Array.Reverse(b_ip);
         return new PhysicalAddress(b_eth);
+    }
+    public void SetPhysicalAddress(ref int Idx, byte[] buf, PhysicalAddress val)
+    {
+        if (val == null) return;
+        byte[] b_eth = val.GetAddressBytes();
+        //Array.Reverse(b_ip);
+        Array.Copy(b_eth, 0, buf, Idx, 6);
+        Idx += 6;
     }
 
     #region CustomTypeDescriptor

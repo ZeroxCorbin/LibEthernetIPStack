@@ -2,7 +2,7 @@
 using System;
 using System.Linq;
 
-namespace LibEthernetIPStack.ObjectsLibrary;
+namespace LibEthernetIPStack.CIP;
 
 public class CIPAttributeIdSerializer : JsonConverter
 {

@@ -1,4 +1,4 @@
-﻿using LibEthernetIPStack.ObjectsLibrary;
+﻿using LibEthernetIPStack.CIP;
 using Newtonsoft.Json;
 using System;
 
@@ -18,7 +18,7 @@ public abstract class EnIPCIPObject
 
     public abstract string GetStrPath();
     [JsonIgnore]
-    public EnIPRemoteDevice RemoteDevice { get; set; }
+    public EnIPProducerDevice RemoteDevice { get; set; }
 
     protected EnIPNetworkStatus ReadDataFromNetwork(byte[] Path, CIPServiceCodes Service)
     {

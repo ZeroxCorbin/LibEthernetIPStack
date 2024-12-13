@@ -98,7 +98,7 @@ public class Encapsulation_Packet
         Array.Copy(SenderContext, 0, ret, 12, 8);
         Buffer.BlockCopy(BitConverter.GetBytes(Options), 0, ret, 20, 4);
         if (Encapsulateddata != null)
-            Array.Copy(Encapsulateddata, 0, ret, 24, Encapsulateddata.Length);
+            Array.Copy(Encapsulateddata, 0, ret, 24, Length);
         return ret;
     }
 }
