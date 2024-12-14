@@ -27,6 +27,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace LibEthernetIPStack.Explicit;
 public class EnIPTCPClientTransport
@@ -98,13 +99,14 @@ public class EnIPTCPClientTransport
                 _ = Tcpclient.Client.Receive(packet);
 
             _ = Tcpclient.Client.Send(SendPkt.toByteArray());
-            Lenght = Tcpclient.Client.Receive(packet);
+
+            Lenght = Tcpclient.Client.Receive(packet, SocketFlags.None);
             if (Lenght > 24)
                 ReceivePkt = new Encapsulation_Packet(packet, ref Offset, Lenght);
             if (Lenght == 0)
                 Trace.WriteLine("Reception timeout with " + Tcpclient.Client.RemoteEndPoint.ToString());
         }
-        catch
+        catch(Exception ex)
         {
             Trace.WriteLine("Error in TcpClient Send Receive");
             Tcpclient = null;

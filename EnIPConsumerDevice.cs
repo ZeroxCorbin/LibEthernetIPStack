@@ -134,6 +134,10 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
                 SessionHandle = 0;
             }
         }
+        else
+        {
+
+        }
     }
 
     private void UdpListener_EncapMessageReceived(object sender, byte[] packet, Encapsulation_Packet EncapPacket, int offset, int msg_length, IPEndPoint remote_address)
@@ -154,6 +158,10 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
 
                 transport.Send(ident, remote_address);
             }
+        }
+        else
+        {
+
         }
     }
 

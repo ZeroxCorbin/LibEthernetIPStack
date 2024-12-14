@@ -208,7 +208,7 @@ public partial class EnIPProducerDevice : ObservableObject, IDisposable
 
     // Unicast TCP ListIdentity for remote device, not UDP it's my choice because in such way 
     // firewall could be configured only for TCP port (TCP is required for the others exchanges)
-    public bool DiscoverServer()
+    public async Task<bool> DiscoverServer()
     {
         if (autoConnect) _ = Connect();
 
@@ -351,15 +351,15 @@ public partial class EnIPProducerDevice : ObservableObject, IDisposable
             }
         }
 
-        if (SupportedClassLists.Count == 0) // service not supported : add basic class, but some could be not present
-        {
-            SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.Identity));
-            SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.MessageRouter));
-            SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.Assembly));
-            SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.TCPIPInterface));
-            SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.EtherNetLink));
-            SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.ConnectionManager));
-        }
+        //if (SupportedClassLists.Count == 0) // service not supported : add basic class, but some could be not present
+        //{
+        //    SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.Identity));
+        //    SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.MessageRouter));
+        //    SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.Assembly));
+        //    SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.TCPIPInterface));
+        //    SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.EtherNetLink));
+        //    SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.ConnectionManager));
+        //}
 
         return SupportedClassLists.ToList();
     }

@@ -29,6 +29,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace LibEthernetIPStack.Explicit;
 
@@ -108,12 +109,14 @@ public class EnIPTCPServerTransport
                 {
                     int Offset = 0;
                     Encapsulation_Packet Encapacket = new(Rcp, ref Offset, Lenght);
-                    MessageReceived?.Invoke(this, Rcp, Encapacket, Offset, Lenght, (IPEndPoint)tcpClient.Client.RemoteEndPoint);
+                   _ = Task.Run(() => MessageReceived?.Invoke(this, Rcp, Encapacket, Offset, Lenght, (IPEndPoint)tcpClient.Client.RemoteEndPoint));
                 }
                 catch (Exception ex)
                 {
                     Trace.TraceError("Exception in tcp recieve: " + ex.Message);
                 }
+            else
+                Trace.TraceError("Too small packet received");
         }
         catch
         {
