@@ -250,7 +250,7 @@ public class CIP_EtherNetLink_instance : CIPObject
         return false;
     }
 
-    public byte[] EncodeInstance()
+    public override byte[] EncodeInstance()
     {
         var b = new byte[512];
         int Idx = 0;

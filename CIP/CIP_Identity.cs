@@ -150,8 +150,12 @@ public class CIP_Identity_instance : CIPObject
     {
         var b = new byte[512];
         int Idx = 0;
-        SetInt16(ref Idx, b, (int)CommonPacketItemIdNumbers.ListIdentityResponse); // Is Identity response...
-        GetRawBytes(b, ref Idx);
+        foreach (var prop in GetType().GetProperties().Where(p => p.GetCustomAttributes(typeof(CIPAttributId), false).Length > 0))
+        {
+            CIPAttributId attr = (CIPAttributId)prop.GetCustomAttributes(typeof(CIPAttributId), false)[0];
+            if (attr.Id != 0)
+                EncodeAttr(attr.Id, ref Idx, b);
+        }
         return b.Take(Idx).ToArray();
     }
 }

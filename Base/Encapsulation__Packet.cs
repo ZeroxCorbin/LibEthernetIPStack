@@ -53,6 +53,8 @@ public class Encapsulation_Packet
         this.Sessionhandle = Sessionhandle;
         this.Encapsulateddata = Encapsulateddata;
         Length = Encapsulateddata != null ? (ushort)Encapsulateddata.Length : (ushort)0;
+
+        Status = EncapsulationStatus.Success;
     }
 
     // From network
