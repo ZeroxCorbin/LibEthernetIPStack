@@ -61,11 +61,11 @@ public class UCMM_RR_Packet
         this.Data = Data;
     }
 
-    public bool IsService(CIPServiceCodes Service)
+    public bool IsService(CIPServiceCodes service)
     {
         byte s = (byte)(this.Service & 0x7F);
 
-        return s == (byte)Service || this.Service > 0x80 && s == (byte)CIPServiceCodes.UnconnectedSend;
+        return s == (byte)service || this.Service > 0x80 && s == (byte)CIPServiceCodes.UnconnectedSend;
     }
 
     public bool IsResponse => Service > 0x80;
@@ -73,6 +73,41 @@ public class UCMM_RR_Packet
 
     // up to now it's only a response paquet decoding
     public UCMM_RR_Packet(byte[] DataArray, ref int Offset, int Lenght)
+    {
+        if (Offset + 20 > Lenght)
+            GeneralStatus = CIPGeneralSatusCode.Not_enough_data;
+
+        // Skip 16 bytes of the Command specific data
+        // Volume 2 : Table 3-2.1 UCMM Request & Table 3-2.2 UCMM Reply
+        Offset += 16;
+
+        Service = DataArray[Offset];
+        Offset += 1;
+
+        //Skip reserved byte
+        Offset += 1;
+
+        GeneralStatus = (CIPGeneralSatusCode)DataArray[Offset]; // only 0 is OK
+        Offset += 1;
+
+        AdditionalStatus_Size = DataArray[Offset];
+        Offset += 1;
+
+        if (Offset + (AdditionalStatus_Size * 2) > Lenght)
+            GeneralStatus = CIPGeneralSatusCode.Not_enough_data;
+
+        if (AdditionalStatus_Size > 0)
+        {
+            AdditionalStatus = new ushort[AdditionalStatus_Size];
+            for (int i = 0; i < AdditionalStatus_Size; i++)
+            {
+                AdditionalStatus[i] = BitConverter.ToUInt16(DataArray, Offset);
+                Offset += 2;
+            }
+        }
+    }
+
+    public UCMM_RR_Packet(byte[] DataArray, ref int Offset, int Lenght, bool IsRequest)
     {
         if (Offset + 20 > Lenght)
             GeneralStatus = CIPGeneralSatusCode.Not_enough_data;

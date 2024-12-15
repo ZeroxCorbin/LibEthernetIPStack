@@ -25,6 +25,8 @@
 *********************************************************************/
 using Newtonsoft.Json;
 using System.ComponentModel;
+using System.Linq;
+using System.Net.NetworkInformation;
 
 namespace LibEthernetIPStack.CIP;
 
@@ -177,4 +179,88 @@ public class CIP_EtherNetLink_instance : CIPObject
 
         return false;
     }
+
+    public override bool EncodeAttr(int AttrNum, ref int Idx, byte[] b)
+    {
+        switch (AttrNum)
+        {
+            case 1:
+                if (Interface_Speed == null) return false;
+                SetUInt32(ref Idx, b, Interface_Speed);
+                return true;
+            case 2:
+                if (Interface_Flags == null) return false;
+                SetUInt32(ref Idx, b, Interface_Flags);
+                return true;
+            case 3:
+                if (Physical_Address == null) return false;
+                SetPhysicalAddress(ref Idx, b, PhysicalAddress.Parse(Physical_Address));
+                return true;
+            case 4:
+                if (InterfaceCounters == null) return false;
+                SetUInt32(ref Idx, b, InterfaceCounters.In_Octets);
+                SetUInt32(ref Idx, b, InterfaceCounters.In_Ucast_Packets);
+                SetUInt32(ref Idx, b, InterfaceCounters.In_NUcast_Packets);
+                SetUInt32(ref Idx, b, InterfaceCounters.In_Discards);
+                SetUInt32(ref Idx, b, InterfaceCounters.In_Errors);
+                SetUInt32(ref Idx, b, InterfaceCounters.In_Unknown_Protos);
+                SetUInt32(ref Idx, b, InterfaceCounters.Out_Octets);
+                SetUInt32(ref Idx, b, InterfaceCounters.Out_Ucast_Packets);
+                SetUInt32(ref Idx, b, InterfaceCounters.Out_NUcast_Packets);
+                SetUInt32(ref Idx, b, InterfaceCounters.Out_Discards);
+                SetUInt32(ref Idx, b, InterfaceCounters.Out_Errors);
+                return true;
+            case 5:
+                if (MediaCounters == null) return false;
+                SetUInt32(ref Idx, b, MediaCounters.Alignment_Errors);
+                SetUInt32(ref Idx, b, MediaCounters.FCS_Errors);
+                SetUInt32(ref Idx, b, MediaCounters.Single_Collisions);
+                SetUInt32(ref Idx, b, MediaCounters.Multiple_Collisions);
+                SetUInt32(ref Idx, b, MediaCounters.SQE_Test_Errors);
+                SetUInt32(ref Idx, b, MediaCounters.Deferred_Transmissions);
+                SetUInt32(ref Idx, b, MediaCounters.Late_Collisions);
+                SetUInt32(ref Idx, b, MediaCounters.Excessive_Collisions);
+                SetUInt32(ref Idx, b, MediaCounters.MAC_Transmit_Errors);
+                SetUInt32(ref Idx, b, MediaCounters.Carrier_Sense_Errors);
+                SetUInt32(ref Idx, b, MediaCounters.Frame_Too_Long);
+                SetUInt32(ref Idx, b, MediaCounters.MAC_Receive_Errors);
+                return true;
+            case 6:
+                if (Control_Bits == null) return false;
+                SetUInt16(ref Idx, b, Control_Bits);
+                SetUInt16(ref Idx, b, Forced_Interface_Speed);
+                return true;
+            case 7:
+                if (Interface_Type == null) return false;
+                Setbyte(ref Idx, b, Interface_Type);
+                return true;
+            case 8:
+                if (Interface_State == null) return false;
+                Setbyte(ref Idx, b, Interface_State);
+                return true;
+            case 9:
+                if (Admin_State == null) return false;
+                Setbyte(ref Idx, b, Admin_State);
+                return true;
+            case 10:
+                if (Interface_Label == null) return false;
+                SetShortString(ref Idx, b, Interface_Label);
+                return true;
+        }
+        return false;
+    }
+
+    public byte[] EncodeInstance()
+    {
+        var b = new byte[512];
+        int Idx = 0;
+        foreach (var prop in GetType().GetProperties().Where(p => p.GetCustomAttributes(typeof(CIPAttributId), false).Length > 0))
+        {
+            CIPAttributId attr = (CIPAttributId)prop.GetCustomAttributes(typeof(CIPAttributId), false)[0];
+            if (attr.Id != 0)
+                EncodeAttr(attr.Id, ref Idx, b);
+        }
+        return b.Take(Idx).ToArray();
+    }
+
 }

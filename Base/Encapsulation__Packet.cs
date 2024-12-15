@@ -85,6 +85,12 @@ public class Encapsulation_Packet
         Offset += 8;
         Options = BitConverter.ToUInt32(Packet, Offset);
         Offset += 4;  // value 24
+        if(this.Length > 0)
+        {
+            Encapsulateddata = new byte[this.Length];
+            Array.Copy(Packet, Offset, Encapsulateddata, 0, this.Length);
+        }
+
     }
 
     public byte[] toByteArray(EncapsulationStatus Status = EncapsulationStatus.Success)

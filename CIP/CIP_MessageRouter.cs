@@ -24,7 +24,9 @@
 *
 *********************************************************************/
 using Newtonsoft.Json;
+using System;
 using System.ComponentModel;
+using System.Linq;
 
 namespace LibEthernetIPStack.CIP;
 
@@ -105,5 +107,45 @@ public class CIP_MessageRouter_instance : CIPObject
 
         }
         return false;
+    }
+
+    public override bool EncodeAttr(int AttrNum, ref int Idx, byte[] b)
+    {
+        switch (AttrNum)
+        {
+            case 1:
+                if (SupportedObjects == null) return false;
+                SetUInt16(ref Idx, b, SupportedObjects.Number);
+                for (int i = 0; i < SupportedObjects.Number.Value; i++)
+                    SetUInt16(ref Idx, b, SupportedObjects.ClassesId[i]);
+                return true;
+            case 2:
+                if (MaxConnectionsSupported == null) return false;
+                SetUInt16(ref Idx, b, MaxConnectionsSupported);
+                return true;
+            case 3:
+                if (NumberOfCurrentConnections == null) return false;
+                SetUInt16(ref Idx, b, NumberOfCurrentConnections);
+                return true;
+            case 4:
+                if (ActiveConnections == null) return false;
+                for (int i = 0; i < ActiveConnections.Length; i++)
+                    SetUInt16(ref Idx, b, ActiveConnections[i]);
+                return true;
+        }
+        return false;
+    }
+
+    public byte[] EncodeInstance()
+    {
+        var b = new byte[512];
+        int Idx = 0;
+        foreach (var prop in GetType().GetProperties().Where(p => p.GetCustomAttributes(typeof(CIPAttributId), false).Length > 0))
+        {
+            CIPAttributId attr = (CIPAttributId)prop.GetCustomAttributes(typeof(CIPAttributId), false)[0];
+            if (attr.Id != 0)
+                EncodeAttr(attr.Id, ref Idx, b);
+        }
+        return b.Take(Idx).ToArray();
     }
 }

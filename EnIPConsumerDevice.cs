@@ -113,11 +113,15 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
             UCMM_RR_Packet m = new(packet, ref offset, msg_length);
             if (m.IsOK)
             {
+
                 if (m.IsService(CIPServiceCodes.GetAttributeSingle) || m.IsService(CIPServiceCodes.SetAttributeSingle))
                 {
-                    //EnIPAttribut att = new(m., this);
-                    //att.On_ItemMessageReceived(sender, packet, m, offset, msg_length, remote_address);
+
                 }
+            }
+            else
+            {
+
             }
         }
         else if (EncapPacket.Command == EncapsulationCommands.RegisterSession)
@@ -148,13 +152,23 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
             NetworkStatusUpdate?.Invoke(EnIPNetworkStatus.OnLine, "Identity requested from " + remote_address.ToString());
             if (sender is EnIPUDPTransport transport)
             {
+
                 List<byte> data =
                 [
-                    1, 0, 0, 0, 0, 0, 0, 0,
                     .. new EnIPSocketAddress(epUdpEncap).toByteArray().ToList(),
-                    .. Identity_instance.EncodeAttr(),
+                    .. Identity_instance.GetRawBytes(),
                 ];
-                Encapsulation_Packet ident = new(EncapsulationCommands.ListIdentity, 0, data.ToArray());
+                List<byte> data1 =
+                [
+                    1, 0, 
+                    .. BitConverter.GetBytes((int)CommonPacketItemIdNumbers.ListIdentityResponse).Take(2),
+                    .. BitConverter.GetBytes(data.Count() + 3).Take(2),
+                    1,0,
+                    .. data,
+.. BitConverter.GetBytes((int)IdentityObjectState.Operational).Take(1),
+                ];
+
+                Encapsulation_Packet ident = new(EncapsulationCommands.ListIdentity, 0, data1.ToArray());
 
                 transport.Send(ident, remote_address);
             }
@@ -214,7 +228,7 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
 
     private bool CreateNewSession(object sender, IPEndPoint consumer, Encapsulation_Packet encap)
     {
-        uint handle = 123654;
+        uint handle = rnd32();
         if (sender is EnIPTCPServerTransport transport)
         {
             byte[] bytes = new byte[4];
@@ -242,5 +256,11 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
 
         NetworkStatusUpdate?.Invoke(state, ex.Message);
         return state;
+    }
+
+    private static readonly Random _rand = new();
+    private static uint rnd32()
+    {
+        return (uint)(_rand.Next(1 << 30)) << 2 | (uint)(_rand.Next(1 << 2));
     }
 }

@@ -116,21 +116,42 @@ public class CIP_Identity_instance : CIPObject
         return false;
     }
 
-    public byte[] EncodeAttr()
+    public override bool EncodeAttr(int AttrNum, ref int Idx, byte[] b)
     {
-        byte[] b = new byte[256];
-        int Idx = 0;
-        SetUInt16(ref Idx, b, Vendor_ID);
-        SetUInt16(ref Idx, b, Device_Type);
-        SetUInt16(ref Idx, b, Product_Code);
-        Setbyte(ref Idx, b, Revision.Major_Revision);
-        Setbyte(ref Idx, b, Revision.Minor_Revision);
-        SetUInt16(ref Idx, b, Status);
-        SetUInt32(ref Idx, b, Serial_Number);
-        SetShortString(ref Idx, b, Product_Name);
-        Setbyte(ref Idx, b, (byte)IdentityObjectState.Operational);
+        switch (AttrNum)
+        {
+            case 1:
+                SetUInt16(ref Idx, b, Vendor_ID);
+                return true;
+            case 2:
+                SetUInt16(ref Idx, b, Device_Type);
+                return true;
+            case 3:
+                SetUInt16(ref Idx, b, Product_Code);
+                return true;
+            case 4:
+                Setbyte(ref Idx, b, Revision.Major_Revision);
+                Setbyte(ref Idx, b, Revision.Minor_Revision);
+                return true;
+            case 5:
+                SetUInt16(ref Idx, b, Status);
+                return true;
+            case 6:
+                SetUInt32(ref Idx, b, Serial_Number);
+                return true;
+            case 7:
+                SetShortString(ref Idx, b, Product_Name);
+                return true;
+        }
+        return false;
+    }
 
-        var ret = b.Length > Idx ? b.Take(Idx).ToArray() : b;
-        return ret;
+    public override byte[] EncodeInstance()
+    {
+        var b = new byte[512];
+        int Idx = 0;
+        SetInt16(ref Idx, b, (int)CommonPacketItemIdNumbers.ListIdentityResponse); // Is Identity response...
+        GetRawBytes(b, ref Idx);
+        return b.Take(Idx).ToArray();
     }
 }

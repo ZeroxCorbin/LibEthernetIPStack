@@ -27,6 +27,7 @@ using LibEthernetIPStack.Base;
 using Newtonsoft.Json;
 using System;
 using System.ComponentModel;
+using System.Linq;
 
 namespace LibEthernetIPStack.CIP;
 
@@ -167,5 +168,71 @@ public class CIP_TCPIPInterface_instance : CIPObject
         }
 
         return false;
+    }
+
+    public override bool EncodeAttr(int AttrNum, ref int Idx, byte[] b)
+    {
+        switch (AttrNum)
+        {
+            case 1:
+                SetUInt32(ref Idx, b, Status);
+                return true;
+            case 2:
+                SetUInt32(ref Idx, b, Configuration_Capability);
+                return true;
+            case 3:
+                SetUInt32(ref Idx, b, Configuration_Control);
+                return true;
+            case 4:
+                if (PhysicalObjectLinkPath == null) return false;
+                byte[] _Path = EnIPPath.GetPath(PhysicalObjectLinkPath);
+                SetUInt16(ref Idx, b, (ushort)(_Path.Length / 2));
+                Array.Copy(_Path, 0, b, Idx, _Path.Length);
+                Idx += _Path.Length;
+                return true;
+            case 5:
+                if (Interface_Configuration == null) return false;
+                SetIPAddress(ref Idx, b, System.Net.IPAddress.Parse(Interface_Configuration.IP_Address));
+                SetIPAddress(ref Idx, b, System.Net.IPAddress.Parse(Interface_Configuration.NetMask));
+                SetIPAddress(ref Idx, b, System.Net.IPAddress.Parse(Interface_Configuration.Gateway_Address));
+                SetIPAddress(ref Idx, b, System.Net.IPAddress.Parse(Interface_Configuration.Name_Server_1));
+                SetIPAddress(ref Idx, b, System.Net.IPAddress.Parse(Interface_Configuration.Name_Server_2));
+                SetString(ref Idx, b, Interface_Configuration.Domain_Name);
+                return true;
+            case 6:
+                if (Host_Name == null) return false;
+                SetString(ref Idx, b, Host_Name);
+                return true;
+            case 7:
+                if (Safety_Network_Number == null) return false;
+                Array.Copy(Safety_Network_Number, 0, b, Idx, 6);
+                Idx += 6;
+                return true;
+            case 8:
+                Setbyte(ref Idx, b, TTL_Value);
+                return true;
+            case 9:
+                if (Mcast_Config == null) return false;
+                Setbyte(ref Idx, b, Mcast_Config.Alloc_Control);
+                Setbyte(ref Idx, b, Mcast_Config.Reserved);
+                SetUInt16(ref Idx, b, Mcast_Config.Num_Mcast);
+                SetIPAddress(ref Idx, b, System.Net.IPAddress.Parse(Mcast_Config.Mcast_Start_Addr));
+                return true;
+        }
+        return false;
+
+    }
+
+    public byte[] EncodeInstance()
+    {
+        var b = new byte[512];
+        int Idx = 0;
+        foreach (var prop in GetType().GetProperties().Where(p => p.GetCustomAttributes(typeof(CIPAttributId), false).Length > 0))
+        {
+            CIPAttributId attr = (CIPAttributId)prop.GetCustomAttributes(typeof(CIPAttributId), false)[0];
+            if (attr.Id != 0)
+                EncodeAttr(attr.Id, ref Idx, b);
+        }
+        return b.Take(Idx).ToArray();
     }
 }

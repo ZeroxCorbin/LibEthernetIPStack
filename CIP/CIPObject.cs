@@ -27,6 +27,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Text;
@@ -56,6 +57,8 @@ public abstract class CIPObject
     public virtual bool DecodeAttr(int AttrNum, ref int Idx, byte[] b) => false;
     public virtual bool EncodeAttr(int AttrNum, ref int Idx, byte[] b) => false;
 
+    public virtual byte[] EncodeInstance() => null;
+
     public bool SetRawBytes(byte[] b)
     {
         int Idx = 0;
@@ -77,10 +80,34 @@ public abstract class CIPObject
 
         for (int i = 1; i < AttIdMax + 1; i++)
             _ = EncodeAttr(i, ref Idx, b);
-        if (Idx < b.Length)
+        if (Remain_Undecoded_Bytes != null)
             Array.Copy(Remain_Undecoded_Bytes, 0, b, Idx, Remain_Undecoded_Bytes.Length);
 
         return true;
+    }
+
+    public bool GetRawBytes(byte[] b, ref int Idx)
+    {
+        for (int i = 1; i < AttIdMax + 1; i++)
+            _ = EncodeAttr(i, ref Idx, b);
+        if (Remain_Undecoded_Bytes != null)
+            Array.Copy(Remain_Undecoded_Bytes, 0, b, Idx, Remain_Undecoded_Bytes.Length);
+        return true;
+    }
+
+    public byte[] GetRawBytes()
+    {
+        var b = new byte[1024];
+        int Idx = 0;
+
+        for (int i = 1; i < AttIdMax + 1; i++)
+            _ = EncodeAttr(i, ref Idx, b);
+        if (Remain_Undecoded_Bytes != null)
+        {
+            Array.Copy(Remain_Undecoded_Bytes, 0, b, Idx, Remain_Undecoded_Bytes.Length);
+            Idx += Remain_Undecoded_Bytes.Length;
+        }
+        return b.Take(Idx).ToArray();
     }
 
     public bool? Getbool(ref int Idx, byte[] buf)
