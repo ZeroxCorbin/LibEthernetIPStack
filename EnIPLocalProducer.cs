@@ -12,7 +12,7 @@ using System.Linq;
 using System.Net;
 
 namespace LibEthernetIPStack;
-public partial class EnIPConsumerDevice : ObservableObject, IDisposable
+public partial class EnIPLocalProducer : ObservableObject, IDisposable
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -63,7 +63,7 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
     [ObservableProperty] private EnIPAttribut assembly_Inputs;
     [ObservableProperty] private EnIPAttribut assembly_Outputs;
 
-    private EnIPProducerDevice _self;
+    private EnIPRemoteProducer _self;
 
     private IPEndPoint epTcpEncap;
     private IPEndPoint epUdpCIP;
@@ -91,7 +91,7 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
     // This constuctor is used with the ListIdentity response buffer
     // No local endpoint given here, the TCP/IP stack should do the job
     // if more than one interface is present
-    public EnIPConsumerDevice(long localIP, CIP_Identity_instance cIP_Identity_Instance)
+    public EnIPLocalProducer(long localIP, CIP_Identity_instance cIP_Identity_Instance)
     {
         SocketAddress = new EnIPSocketAddress(new IPEndPoint(localIP, 44818));
 
@@ -129,7 +129,7 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
 
     private void CreateAssemblyInstance()
     {
-        _self = new EnIPProducerDevice();
+        _self = new EnIPRemoteProducer();
         _self.SocketAddress = SocketAddress;
         _self.VendorId = VendorId;
         _self.DeviceType = DeviceType;
@@ -354,7 +354,7 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
 
     public void Class1SendO2T(SequencedAddressItem Item) => UdpListener?.Send(Item, epUdpEncap);
 
-    public void CopyData(EnIPProducerDevice newset)
+    public void CopyData(EnIPRemoteProducer newset)
     {
         DataLength = newset.DataLength;
         EncapsulationVersion = newset.EncapsulationVersion;

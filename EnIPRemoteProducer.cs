@@ -13,7 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace LibEthernetIPStack.Shared;
-public partial class EnIPProducerDevice : ObservableObject, IDisposable
+public partial class EnIPRemoteProducer : ObservableObject, IDisposable
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -131,7 +131,7 @@ public partial class EnIPProducerDevice : ObservableObject, IDisposable
     // This constuctor is used with the ListIdentity response buffer
     // No local endpoint given here, the TCP/IP stack should do the job
     // if more than one interface is present
-    public EnIPProducerDevice(IPEndPoint ep, int TcpTimeout, byte[] DataArray, Encapsulation_Packet encapsulation, ref int Offset)
+    public EnIPRemoteProducer(IPEndPoint ep, int TcpTimeout, byte[] DataArray, Encapsulation_Packet encapsulation, ref int Offset)
     {
         this.ep = ep;
         IdentityEncapPacket = encapsulation;
@@ -140,7 +140,7 @@ public partial class EnIPProducerDevice : ObservableObject, IDisposable
         FromListIdentityResponse(DataArray, ref Offset);
     }
 
-    public EnIPProducerDevice() => Tcpclient = new EnIPTCPClientTransport();
+    public EnIPRemoteProducer() => Tcpclient = new EnIPTCPClientTransport();
 
     public void Dispose()
     {
@@ -166,7 +166,7 @@ public partial class EnIPProducerDevice : ObservableObject, IDisposable
 
     public void Class1SendO2T(SequencedAddressItem Item) => UdpListener?.Send(Item, epUdp);
 
-    public void CopyData(EnIPProducerDevice newset)
+    public void CopyData(EnIPRemoteProducer newset)
     {
         DataLength = newset.DataLength;
         EncapsulationVersion = newset.EncapsulationVersion;
@@ -184,7 +184,7 @@ public partial class EnIPProducerDevice : ObservableObject, IDisposable
     // Certainly here if SocketAddress is fullfil it could be the
     // value to test
     // FIXME if you know.
-    public bool Equals(EnIPProducerDevice other) => ep.Equals(other.ep);
+    public bool Equals(EnIPRemoteProducer other) => ep.Equals(other.ep);
 
     public bool IsConnected => Tcpclient.IsConnected;
 
