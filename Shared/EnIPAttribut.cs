@@ -12,7 +12,8 @@ public class EnIPAttribut : EnIPCIPObject
 {
     public EnIPInstance Instance { get; set; }
     // Forward Open
-    public uint T2O_ConnectionId, O2T_ConnectionId;
+    public uint T2O_ConnectionId { get; set; }
+    public uint O2T_ConnectionId { get; set; }
 
     // It got the required data to close the previous ForwardOpen
     private ForwardClose_Packet closePkt;
@@ -93,10 +94,10 @@ public class EnIPAttribut : EnIPCIPObject
         RemoteDevice.Class1SendO2T(O2TSequenceItem);
     }
 
-    public void Class1UpdateT2O()
+    public void Class1UpdateT2O(byte[] data)
     {
-        T2OSequenceItem.data = RawData; // Normaly don't change between call
-        //RemoteDevice.Class1SendT2O(T2OSequenceItem);
+        T2OSequenceItem.data = data; // Normaly don't change between call
+        RemoteDevice.Class1SendT2O(T2OSequenceItem);
     }
 
     // Coming from an udp class1 device, with a previous ForwardOpen action
@@ -123,7 +124,27 @@ public class EnIPAttribut : EnIPCIPObject
         }
         else if (itemPacket.ConnectionId == O2T_ConnectionId)
         {
+
+            if (msg_length - offset == 0) return;
+
+            RawData = new byte[msg_length - offset];
+            Array.Copy(packet, offset, RawData, 0, RawData.Length);
+
+            if (DecodedMembers != null)
+            {
+                int idx = 0;
+                try
+                {
+                    _ = DecodedMembers.DecodeAttr(Id, ref idx, RawData);
+                }
+                catch { }
+            }
+
             O2TEvent?.Invoke(this);
+        }
+        else
+        {
+
         }
 
 

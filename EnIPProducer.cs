@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LibEthernetIPStack;
@@ -53,11 +54,11 @@ public partial class EnIPProducer : ObservableObject, IDisposable
                 epUdp = new IPEndPoint(ep.Address, 2222);
             }
 
-            if (epTcpEncap == null || epTcpEncap.Address.ToString() != new IPAddress(value.sin_addr).ToString())
+            if (epTcpServer == null || epTcpServer.Address.ToString() != new IPAddress(value.sin_addr).ToString())
             {
-                epTcpEncap = new IPEndPoint(System.Net.IPAddress.Parse(IPAddress), value.sin_port);
-                epUdpEncap = new IPEndPoint(epTcpEncap.Address, value.sin_port);
-                epUdpP2P = new IPEndPoint(epTcpEncap.Address, 2222);
+                epTcpServer = new IPEndPoint(System.Net.IPAddress.Parse(IPAddress), value.sin_port);
+                epUdpEncap = new IPEndPoint(epTcpServer.Address, value.sin_port);
+                epUdpCIPServer = new IPEndPoint(epTcpServer.Address, 2222);
             }
         }
     }
@@ -72,10 +73,12 @@ public partial class EnIPProducer : ObservableObject, IDisposable
     private IPEndPoint ep;
     private IPEndPoint epUdp;
 
-    private IPEndPoint epTcpEncap;
+    private IPEndPoint epTcpServer;
     private IPEndPoint epUdpEncap;
     private IPEndPoint epUdpBroadcast;
-    private IPEndPoint epUdpP2P;
+    private IPEndPoint epUdpCIPServer;
+
+    private IPEndPoint epCipTarget;
 
     // Not a property to avoid browsable in propertyGrid, also [Browsable(false)] could be used
     public IPAddress IPAdd() => ep.Address;
@@ -85,7 +88,7 @@ public partial class EnIPProducer : ObservableObject, IDisposable
 
     private uint SessionHandle = 0; // When Register Session is set
 
-    private EnIPTCPClientTransport Tcpclient;
+    private EnIPTCPClientTransport TcpClient;
     private static EnIPUDPTransport UdpListener;
 
     [ObservableProperty][property: JsonIgnore] private CIP_Identity_instance identity_instance;
@@ -96,8 +99,8 @@ public partial class EnIPProducer : ObservableObject, IDisposable
 
     [ObservableProperty][property: JsonIgnore] private EnIPAttribut assembly_Outputs;
     [ObservableProperty][property: JsonIgnore] private byte[] assembly_OutputsData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-   
-    private EnIPTCPServerTransport Tcpserver;
+
+    private EnIPTCPServerTransport TcpServer;
     private static EnIPUDPTransport UdpCIPServer;
 
     private object LockTransaction = new();
@@ -162,35 +165,34 @@ public partial class EnIPProducer : ObservableObject, IDisposable
         this.ep = ep;
         IdentityEncapPacket = encapsulation;
         epUdp = new IPEndPoint(ep.Address, 2222);
-        Tcpclient = new EnIPTCPClientTransport();
+        TcpClient = new EnIPTCPClientTransport();
         FromListIdentityResponse(DataArray, ref Offset);
     }
 
-    public EnIPProducer() => Tcpclient = new EnIPTCPClientTransport();
+    public EnIPProducer() => TcpClient = new EnIPTCPClientTransport();
+
+    #region Producer
 
     public EnIPProducer(long localIP, CIP_Identity_instance cIP_Identity_Instance)
     {
         SocketAddress = new EnIPSocketAddress(new IPEndPoint(localIP, 44818));
 
         //Initialize encapsulated message listeners
-        Tcpserver = new EnIPTCPServerTransport();
+        TcpServer = new EnIPTCPServerTransport(epTcpServer);
 
         UdpListener ??= new EnIPUDPTransport(epUdpEncap);
         epUdpBroadcast = new IPEndPoint(UdpListener.GetBroadcastAddress().Address, 2222);
         UdpListener?.JoinMulticastGroup(epUdpBroadcast.Address);
 
-        UdpCIPServer ??= new EnIPUDPTransport(epUdpP2P);
+        UdpCIPServer ??= new EnIPUDPTransport(epUdpCIPServer);
 
         Identity_instance = cIP_Identity_Instance;
         CreateMessageRouterInstance();
         CreateAssemblyInstance();
 
         UdpListener.EncapMessageReceived += UdpListener_EncapMessageReceived;
-        UdpCIPServer.ItemMessageReceived += UdpCIPServer_ItemMessageReceived;
-        Tcpserver.MessageReceived += Tcpserver_MessageReceived;
+        TcpServer.MessageReceived += Tcpserver_MessageReceived;
     }
-
-    #region Server
 
     private static readonly Random _rand = new();
     private static uint rnd32()
@@ -273,10 +275,7 @@ public partial class EnIPProducer : ObservableObject, IDisposable
 
         }
     }
-    private void UdpCIPServer_ItemMessageReceived(object sender, byte[] packet, SequencedAddressItem ItemPacket, int offset, int msg_length, IPEndPoint remote_address)
-    {
 
-    }
     private void Tcpserver_MessageReceived(object sender, byte[] packet, Encapsulation_Packet EncapPacket, int offset, int msg_length, IPEndPoint remote_address)
     {
         if (EncapPacket.Command == EncapsulationCommands.SendRRData)
@@ -284,7 +283,6 @@ public partial class EnIPProducer : ObservableObject, IDisposable
             UCMM_RR_Packet m = new(packet, ref offset, msg_length, true);
             if (m.IsOK)
             {
-
                 // GetAttributeSingle
                 if (m.IsService(CIPServiceCodes.GetAttributeSingle) && m.IsQuery)
                 {
@@ -410,11 +408,21 @@ public partial class EnIPProducer : ObservableObject, IDisposable
                         {
                             var fopen = new ForwardOpen_Packet(EncapPacket.Encapsulateddata);
 
-                            Class1AttributEnrolment(Assembly_Inputs);
-                            Class1AttributEnrolment(Assembly_Outputs);
+                            Assembly_Inputs.T2OSequenceItem = new SequencedAddressItem(fopen.T2O_ConnectionId, 0 , Assembly_InputsData);
+                            Assembly_Inputs.T2OSequenceItem.Lenght2 = (ushort)Assembly_InputsData.Length;
+                            Assembly_Inputs.T2O_ConnectionId = fopen.T2O_ConnectionId;
 
+                            epCipTarget = new IPEndPoint(remote_address.Address, 2222);
+
+
+                            Assembly_Outputs.O2T_ConnectionId = fopen.O2T_ConnectionId;
                             Assembly_Outputs.O2TEvent -= Assembly_Outputs_O2TEvent;
                             Assembly_Outputs.O2TEvent += Assembly_Outputs_O2TEvent;
+                       
+                            Class1AttributEnrolment(Assembly_Inputs, true);
+                            Class1AttributEnrolment(Assembly_Outputs, true);
+
+                            Task.Factory.StartNew(() => Assembly_Inputs_T2O_Thread(fopen.T2O_RPI));
 
                             if (sender is EnIPTCPServerTransport transport)
                             {
@@ -429,10 +437,19 @@ public partial class EnIPProducer : ObservableObject, IDisposable
                 //Forward Close
                 else if (m.IsService(CIPServiceCodes.ForwardClose) && m.IsQuery)
                 {
-                    Class1AttributUnEnrolment(Assembly_Inputs);
-                    Class1AttributUnEnrolment(Assembly_Outputs);
+                    Assembly_Outputs.T2O_ConnectionId = 0;
+                    Assembly_Outputs.O2T_ConnectionId = 0;
+
+                    Assembly_Inputs.O2T_ConnectionId = 0;
+                    Assembly_Inputs.T2O_ConnectionId = 0;
+
+                    Class1AttributUnEnrolment(Assembly_Inputs, true);
+                    Class1AttributUnEnrolment(Assembly_Outputs, true);
 
                     Assembly_Outputs.O2TEvent -= Assembly_Outputs_O2TEvent;
+
+                    if(cyclicToken != null)
+                        cyclicToken.Cancel();
 
                     if (sender is EnIPTCPServerTransport transport)
                     {
@@ -477,6 +494,21 @@ public partial class EnIPProducer : ObservableObject, IDisposable
 
     }
 
+    private CancellationTokenSource cyclicToken = new();
+    private void Assembly_Inputs_T2O_Thread(uint rpi)
+    {
+        cyclicToken = new();
+        while (!cyclicToken.IsCancellationRequested)
+        {
+           Assembly_Inputs.Class1UpdateT2O(Assembly_InputsData); // must be called even if no data changed to maintain the link (Heartbeat)
+            
+            DateTime start = DateTime.Now;
+            while ((DateTime.Now - start) < TimeSpan.FromMilliseconds(rpi / 1000))
+                Thread.Sleep(1);
+        }
+    }
+
+
     #endregion
 
     public void Dispose()
@@ -489,19 +521,32 @@ public partial class EnIPProducer : ObservableObject, IDisposable
 
     public void Class1AddMulticast(string IP) => UdpListener?.JoinMulticastGroup(IP);
 
-    public void Class1AttributEnrolment(EnIPAttribut att)
+    public void Class1AttributEnrolment(EnIPAttribut att, bool server = false)
     {
-        if (UdpListener != null)
+        if (server)
+        {
+            if (UdpCIPServer != null)
+                UdpCIPServer.ItemMessageReceived += new ItemMessageReceivedHandler(att.On_ItemMessageReceived);
+        }
+        else if (UdpListener != null)
             UdpListener.ItemMessageReceived += new ItemMessageReceivedHandler(att.On_ItemMessageReceived);
+
     }
 
-    public void Class1AttributUnEnrolment(EnIPAttribut att)
+    public void Class1AttributUnEnrolment(EnIPAttribut att, bool server = false)
     {
-        if (UdpListener != null)
+        if (server)
+        {
+            if (UdpCIPServer != null)
+                UdpCIPServer.ItemMessageReceived -= new ItemMessageReceivedHandler(att.On_ItemMessageReceived);
+        }
+        else if (UdpListener != null)
             UdpListener.ItemMessageReceived -= new ItemMessageReceivedHandler(att.On_ItemMessageReceived);
     }
 
     public void Class1SendO2T(SequencedAddressItem Item) => UdpListener?.Send(Item, epUdp);
+
+    public void Class1SendT2O(SequencedAddressItem Item) => UdpCIPServer?.Send(Item, epCipTarget);
 
     public void CopyData(EnIPProducer newset)
     {
@@ -523,17 +568,17 @@ public partial class EnIPProducer : ObservableObject, IDisposable
     // FIXME if you know.
     public bool Equals(EnIPProducer other) => ep.Equals(other.ep);
 
-    public bool IsConnected => Tcpclient.IsConnected;
+    public bool IsConnected => TcpClient.IsConnected;
 
     public bool Connect()
     {
-        if (Tcpclient.IsConnected == true) 
+        if (TcpClient.IsConnected == true)
             return true;
 
         SessionHandle = 0;
 
         lock (LockTransaction)
-            return Tcpclient.Connect(ep);
+            return TcpClient.Connect(ep);
     }
 
     public void Disconnect()
@@ -541,7 +586,7 @@ public partial class EnIPProducer : ObservableObject, IDisposable
         SessionHandle = 0;
 
         lock (LockTransaction)
-            Tcpclient.Disconnect();
+            TcpClient.Disconnect();
     }
 
     // Unicast TCP ListIdentity for remote device, not UDP it's my choice because in such way 
@@ -552,7 +597,7 @@ public partial class EnIPProducer : ObservableObject, IDisposable
 
         try
         {
-            if (Tcpclient.IsConnected)
+            if (TcpClient.IsConnected)
             {
                 Encapsulation_Packet p = new(EncapsulationCommands.ListIdentity)
                 {
@@ -564,7 +609,7 @@ public partial class EnIPProducer : ObservableObject, IDisposable
                 Encapsulation_Packet Encapacket;
 
                 lock (LockTransaction)
-                    Length = Tcpclient.SendReceive(p, out Encapacket, out Offset, ref packet);
+                    Length = TcpClient.SendReceive(p, out Encapacket, out Offset, ref packet);
 
                 Trace.WriteLine("Send ListIdentity to " + ep.Address.ToString());
 
@@ -594,7 +639,7 @@ public partial class EnIPProducer : ObservableObject, IDisposable
     {
         if (autoConnect) _ = Connect();
 
-        if (Tcpclient.IsConnected == true && SessionHandle == 0)
+        if (TcpClient.IsConnected == true && SessionHandle == 0)
         {
             byte[] b = new byte[] { 1, 0, 0, 0 };
             Encapsulation_Packet p = new(EncapsulationCommands.RegisterSession, 0, b);
@@ -602,7 +647,7 @@ public partial class EnIPProducer : ObservableObject, IDisposable
             int ret;
             Encapsulation_Packet rep;
             lock (LockTransaction)
-                ret = Tcpclient.SendReceive(p, out rep, out int Offset, ref packet);
+                ret = TcpClient.SendReceive(p, out rep, out int Offset, ref packet);
 
             if (ret == 28)
                 if (rep.IsOK)
@@ -626,7 +671,7 @@ public partial class EnIPProducer : ObservableObject, IDisposable
             Offset = 0;
 
             lock (LockTransaction)
-                Lenght = Tcpclient.SendReceive(p, out rep, out Offset, ref packet);
+                Lenght = TcpClient.SendReceive(p, out rep, out Offset, ref packet);
 
             string ErrorMsg = "TCP Error";
 
@@ -709,7 +754,7 @@ public partial class EnIPProducer : ObservableObject, IDisposable
             Encapsulation_Packet p = new(EncapsulationCommands.RegisterSession, SessionHandle);
 
             lock (LockTransaction)
-                Tcpclient.Send(p);
+                TcpClient.Send(p);
 
             SessionHandle = 0;
         }

@@ -43,11 +43,11 @@ public class EnIPTCPServerTransport
     public bool IsListening { get; private set; } = false;
     public bool HasClients => ClientsList.Count > 0;
 
-    public EnIPTCPServerTransport(IPAddress ipAdress = null)
+    public EnIPTCPServerTransport(IPEndPoint ep = null)
     {
-        ipAdress ??= IPAddress.Any;
+        ep ??= new IPEndPoint(IPAddress.Any, 0xAF12);
 
-        _tcpListener = new TcpListener(IPAddress.Any, 0xAF12);
+        _tcpListener = new TcpListener(ep);
         Thread listenThread = new(ListenForClients)
         {
             IsBackground = true
