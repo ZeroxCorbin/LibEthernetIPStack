@@ -36,16 +36,18 @@ namespace LibEthernetIPStack.Explicit;
 public class EnIPTCPServerTransport
 {
     public event EncapMessageReceivedHandler MessageReceived;
-    private TcpListener tcpListener;
+    private TcpListener _tcpListener { get; } 
 
-    private List<TcpClient> ClientsList = [];
+    private List<TcpClient> ClientsList { get; } = [];
 
     public bool IsListening { get; private set; } = false;
     public bool HasClients => ClientsList.Count > 0;
 
-    public EnIPTCPServerTransport()
+    public EnIPTCPServerTransport(IPAddress ipAdress = null)
     {
-        tcpListener = new TcpListener(IPAddress.Any, 0xAF12);
+        ipAdress ??= IPAddress.Any;
+
+        _tcpListener = new TcpListener(IPAddress.Any, 0xAF12);
         Thread listenThread = new(ListenForClients)
         {
             IsBackground = true
@@ -57,12 +59,12 @@ public class EnIPTCPServerTransport
     {
         try
         {
-            tcpListener.Start();
+            _tcpListener.Start();
             IsListening = true;
             for (; ; )
             {
                 // Blocking
-                TcpClient client = tcpListener.AcceptTcpClient();
+                TcpClient client = _tcpListener.AcceptTcpClient();
                 Trace.WriteLine("Arrival of " + ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString());
 
                 ClientsList.Add(client);
@@ -96,7 +98,7 @@ public class EnIPTCPServerTransport
     private void HandleClientComm(object client)
     {
         TcpClient tcpClient = (TcpClient)client;
-        byte[] Rcp = new byte[1500];
+        byte[] rcp = new byte[1500];
 
         try
         {
@@ -106,14 +108,14 @@ public class EnIPTCPServerTransport
             {
                 if (clientStream.DataAvailable)
                 {
-                    int Lenght = clientStream.Read(Rcp, 0, 1500);
+                    int length = clientStream.Read(rcp, 0, 1500);
 
-                    if (Lenght >= 24)
+                    if (length >= 24)
                         try
                         {
-                            int Offset = 0;
-                            Encapsulation_Packet Encapacket = new(Rcp, ref Offset, Lenght);
-                           _ = Task.Run(() => MessageReceived?.Invoke(this, Rcp, Encapacket, Offset, Lenght, (IPEndPoint)tcpClient.Client.RemoteEndPoint));
+                            int offset = 0;
+                            Encapsulation_Packet encapacket = new(rcp, ref offset, length);
+                           _ = Task.Run(() => MessageReceived?.Invoke(this, rcp, encapacket, offset, length, (IPEndPoint)tcpClient.Client.RemoteEndPoint));
                         }
                         catch (Exception ex)
                         {

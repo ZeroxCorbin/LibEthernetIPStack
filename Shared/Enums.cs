@@ -63,6 +63,7 @@ namespace LibEthernetIPStack.Shared
         Unsupported_Command = 0x00000001,
         Insufficient_Memory = 0x00000002,
         Incorrect_Data = 0x00000003,
+        Service_Not_Supported =  0x00000008,
         Invalid_Session_Handle = 0x000000064,
         Invalid_Length = 0x000000065,
         // Exceptionnel

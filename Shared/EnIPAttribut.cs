@@ -5,22 +5,22 @@ using System.Net;
 namespace LibEthernetIPStack.Shared;
 public class EnIPAttribut : EnIPCIPObject
 {
-    public EnIPInstance myInstance;
+    public EnIPInstance Instance { get; set; }
     // Forward Open
     public uint T2O_ConnectionId, O2T_ConnectionId;
 
     // It got the required data to close the previous ForwardOpen
     private ForwardClose_Packet closePkt;
     // sequence for O->T
-    public SequencedAddressItem SequenceItem;
+    public SequencedAddressItem SequenceItem { get; set; }
 
     public event T2OEventHandler T2OEvent;
 
-    public EnIPAttribut(EnIPInstance Instance, ushort Id)
+    public EnIPAttribut(EnIPInstance instance, ushort id)
     {
-        this.Id = Id;
-        myInstance = Instance;
-        RemoteDevice = Instance.RemoteDevice;
+        Id = id;
+        Instance = instance;
+        RemoteDevice = instance.RemoteDevice;
         Status = EnIPNetworkStatus.OffLine;
     }
 
@@ -47,27 +47,27 @@ public class EnIPAttribut : EnIPCIPObject
 
     public override EnIPNetworkStatus WriteDataToNetwork()
     {
-        byte[] DataPath = EnIPPath.GetPath(myInstance.myClass.Id, myInstance.Id, Id);
-        return WriteDataToNetwork(DataPath, CIPServiceCodes.SetAttributeSingle);
+        byte[] dataPath = EnIPPath.GetPath(Instance.myClass.Id, Instance.Id, Id);
+        return WriteDataToNetwork(dataPath, CIPServiceCodes.SetAttributeSingle);
     }
 
-    public override string GetStrPath() => myInstance.myClass.Id.ToString() + '.' + myInstance.Id.ToString() + "." + Id.ToString();
+    public override string GetStrPath() => Instance.myClass.Id.ToString() + '.' + Instance.Id.ToString() + "." + Id.ToString();
 
     public override EnIPNetworkStatus ReadDataFromNetwork()
     {
-        byte[] DataPath = EnIPPath.GetPath(myInstance.myClass.Id, myInstance.Id, Id);
-        EnIPNetworkStatus ret = ReadDataFromNetwork(DataPath, CIPServiceCodes.GetAttributeSingle);
+        byte[] dataPath = EnIPPath.GetPath(Instance.myClass.Id, Instance.Id, Id);
+        EnIPNetworkStatus ret = ReadDataFromNetwork(dataPath, CIPServiceCodes.GetAttributeSingle);
         if (ret == EnIPNetworkStatus.OnLine)
         {
-            _ = (CIPObjectLibrary)myInstance.myClass.Id;
+            _ = (CIPObjectLibrary)Instance.myClass.Id;
             try
             {
                 if (DecodedMembers == null) // No decoder
                 {
-                    if (myInstance.DecodedMembers == null)
-                        _ = myInstance.AttachDecoderClass();
+                    if (Instance.DecodedMembers == null)
+                        _ = Instance.AttachDecoderClass();
 
-                    DecodedMembers = myInstance.DecodedMembers; // get the same object as the associated Instance
+                    DecodedMembers = Instance.DecodedMembers; // get the same object as the associated Instance
                 }
                 int Idx = 0;
                 _ = DecodedMembers?.DecodeAttr(Id, ref Idx, RawData);
@@ -88,9 +88,9 @@ public class EnIPAttribut : EnIPCIPObject
     }
 
     // Coming from an udp class1 device, with a previous ForwardOpen action
-    public void On_ItemMessageReceived(object sender, byte[] packet, SequencedAddressItem ItemPacket, int offset, int msg_length, IPEndPoint remote_address)
+    public void On_ItemMessageReceived(object sender, byte[] packet, SequencedAddressItem itemPacket, int offset, int msg_length, IPEndPoint remote_address)
     {
-        if (ItemPacket.ConnectionId != T2O_ConnectionId) return;
+        if (itemPacket.ConnectionId != T2O_ConnectionId) return;
 
         if (msg_length - offset == 0) return;
 
@@ -99,10 +99,10 @@ public class EnIPAttribut : EnIPCIPObject
 
         if (DecodedMembers != null)
         {
-            int Idx = 0;
+            int idx = 0;
             try
             {
-                _ = DecodedMembers.DecodeAttr(Id, ref Idx, RawData);
+                _ = DecodedMembers.DecodeAttr(Id, ref idx, RawData);
             }
             catch { }
         }

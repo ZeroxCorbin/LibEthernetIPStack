@@ -223,7 +223,7 @@ public class CIP_TCPIPInterface_instance : CIPObject
 
     }
 
-    public byte[] EncodeInstance()
+    public override byte[] EncodeInstance()
     {
         var b = new byte[512];
         int Idx = 0;

@@ -47,20 +47,20 @@ public class Encapsulation_Packet
     public bool IsOK => Status == EncapsulationStatus.Success;
 
     public Encapsulation_Packet() { }
-    public Encapsulation_Packet(EncapsulationCommands Command, uint Sessionhandle = 0, byte[]? Encapsulateddata = null)
+    public Encapsulation_Packet(EncapsulationCommands command, uint sessionHandle = 0, byte[] encapsulatedData = null, EncapsulationStatus status = EncapsulationStatus.Success)
     {
-        this.Command = Command;
-        this.Sessionhandle = Sessionhandle;
-        this.Encapsulateddata = Encapsulateddata;
-        Length = Encapsulateddata != null ? (ushort)Encapsulateddata.Length : (ushort)0;
+        Command = command;
+        Sessionhandle = sessionHandle;
+        Encapsulateddata = encapsulatedData;
+        Length = encapsulatedData != null ? (ushort)encapsulatedData.Length : (ushort)0;
 
-        Status = EncapsulationStatus.Success;
+        Status = status;
     }
 
     // From network
-    public Encapsulation_Packet(byte[] Packet, ref int Offset, int Length)
+    public Encapsulation_Packet(byte[] packet, ref int offset, int length)
     {
-        ushort Cmd = BitConverter.ToUInt16(Packet, Offset);
+        ushort Cmd = BitConverter.ToUInt16(packet, offset);
 
         if (!Enum.IsDefined(typeof(EncapsulationCommands), Cmd))
         {
@@ -69,33 +69,33 @@ public class Encapsulation_Packet
         }
 
         Command = (EncapsulationCommands)Cmd;
-        Offset += 2;
-        this.Length = BitConverter.ToUInt16(Packet, Offset);
+        offset += 2;
+        this.Length = BitConverter.ToUInt16(packet, offset);
 
-        if (Length < 24 + this.Length)
+        if (length < 24 + this.Length)
         {
             Status = EncapsulationStatus.Invalid_Length;
             return;
         }
 
-        Offset += 2;
-        Sessionhandle = BitConverter.ToUInt32(Packet, Offset);
-        Offset += 4;
-        Status = (EncapsulationStatus)BitConverter.ToUInt32(Packet, Offset);
-        Offset += 4;
-        Array.Copy(Packet, Offset, SenderContext, 0, 8);
-        Offset += 8;
-        Options = BitConverter.ToUInt32(Packet, Offset);
-        Offset += 4;  // value 24
+        offset += 2;
+        Sessionhandle = BitConverter.ToUInt32(packet, offset);
+        offset += 4;
+        Status = (EncapsulationStatus)BitConverter.ToUInt32(packet, offset);
+        offset += 4;
+        Array.Copy(packet, offset, SenderContext, 0, 8);
+        offset += 8;
+        Options = BitConverter.ToUInt32(packet, offset);
+        offset += 4;  // value 24
         if(this.Length > 0)
         {
             Encapsulateddata = new byte[this.Length];
-            Array.Copy(Packet, Offset, Encapsulateddata, 0, this.Length);
+            Array.Copy(packet, offset, Encapsulateddata, 0, this.Length);
         }
 
     }
 
-    public byte[] toByteArray(EncapsulationStatus Status = EncapsulationStatus.Success)
+    public byte[] toByteArray()
     {
         byte[] ret = new byte[24 + Length];
 

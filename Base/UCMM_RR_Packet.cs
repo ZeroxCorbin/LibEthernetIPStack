@@ -51,7 +51,7 @@ public class UCMM_RR_Packet
 
     public bool IsOK => GeneralStatus == CIPGeneralSatusCode.Success;
 
-    public UCMM_RR_Packet(CIPServiceCodes Service, bool IsRequest, byte[] Path, byte[] Data)
+    public UCMM_RR_Packet(CIPServiceCodes Service, bool IsRequest, byte[] Path, byte[] Data, CIPGeneralSatusCode status = CIPGeneralSatusCode.Success)
     {
         this.Service = (byte)Service;
         if (!IsRequest)
@@ -59,6 +59,8 @@ public class UCMM_RR_Packet
 
         this.Path = Path;
         this.Data = Data;
+
+        GeneralStatus = status;
     }
 
     public bool IsService(CIPServiceCodes service)

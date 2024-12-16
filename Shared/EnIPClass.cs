@@ -9,15 +9,16 @@ public class EnIPClass : EnIPCIPObject
 {
     private Type DecoderClass;
 
-    public EnIPClass(EnIPProducerDevice RemoteDevice, ushort Id, Type? DecoderClass = null)
+    public EnIPClass(EnIPProducerDevice remoteDevice, ushort id, Type decoderClass = null)
     {
-        this.Id = Id;
-        this.RemoteDevice = RemoteDevice;
+        Id = id;
+        RemoteDevice = remoteDevice;
         Status = EnIPNetworkStatus.OffLine;
-        if (DecoderClass != null)
+
+        if (decoderClass != null)
         {
-            this.DecoderClass = DecoderClass;
-            if (!DecoderClass.IsSubclassOf(typeof(CIPObject)))
+            DecoderClass = decoderClass;
+            if (!decoderClass.IsSubclassOf(typeof(CIPObject)))
                 throw new ArgumentException("Wrong Decoder class, not subclass of CIPObject", "DecoderClass");
         }
     }
@@ -30,8 +31,8 @@ public class EnIPClass : EnIPCIPObject
     {
 
         // Read all class static attributes
-        byte[] ClassDataPath = EnIPPath.GetPath(Id, 0, null);
-        EnIPNetworkStatus ret = ReadDataFromNetwork(ClassDataPath, CIPServiceCodes.GetAttributesAll);
+        byte[] classDataPath = EnIPPath.GetPath(Id, 0, null);
+        EnIPNetworkStatus ret = ReadDataFromNetwork(classDataPath, CIPServiceCodes.GetAttributesAll);
 
         // If rejected try to read all attributes one by one
         if (ret == EnIPNetworkStatus.OnLineReadRejected)
@@ -39,17 +40,17 @@ public class EnIPClass : EnIPCIPObject
 
             MemoryStream rawbuffer = new();
 
-            ushort AttId = 1; // first static attribut number
+            ushort attributeId = 1; // first static attribut number
 
             do
             {
-                ClassDataPath = EnIPPath.GetPath(Id, 0, AttId);
-                ret = ReadDataFromNetwork(ClassDataPath, CIPServiceCodes.GetAttributeSingle);
+                classDataPath = EnIPPath.GetPath(Id, 0, attributeId);
+                ret = ReadDataFromNetwork(classDataPath, CIPServiceCodes.GetAttributeSingle);
 
                 // push the buffer into the data stream
                 if (ret == EnIPNetworkStatus.OnLine)
                     rawbuffer.Write(RawData, 0, RawData.Length);
-                AttId++;
+                attributeId++;
             }
             while (ret == EnIPNetworkStatus.OnLine);
 

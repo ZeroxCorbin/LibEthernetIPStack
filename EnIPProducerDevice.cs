@@ -395,13 +395,13 @@ public partial class EnIPProducerDevice : ObservableObject, IDisposable
             {
                 byte[] DataPath;
 
-                Cid = att.myInstance.myClass.Id;
-                if (previousAtt != null && Cid == previousAtt.myInstance.myClass.Id)
+                Cid = att.Instance.myClass.Id;
+                if (previousAtt != null && Cid == previousAtt.Instance.myClass.Id)
                     Cid = null;
 
-                Aid = att.Id == 3 && att.myInstance.myClass.Id == 4 ? null : att.Id;
+                Aid = att.Id == 3 && att.Instance.myClass.Id == 4 ? null : att.Id;
 
-                DataPath = EnIPPath.GetPath(Cid, att.myInstance.Id, Aid, att != Config);
+                DataPath = EnIPPath.GetPath(Cid, att.Instance.Id, Aid, att != Config);
                 Array.Copy(DataPath, 0, ConstructDataPath, offset, DataPath.Length);
                 offset += DataPath.Length;
 
