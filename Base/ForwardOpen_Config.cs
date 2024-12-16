@@ -28,45 +28,45 @@ using LibEthernetIPStack.Shared;
 namespace LibEthernetIPStack.Base;
 public class ForwardOpen_Config
 {
-    public bool IsO2T = false;
-    public bool O2T_Exculsive = false;
-    public bool O2T_P2P = true;
+    public bool IsO2T { get; private set; } = false;
+    public bool O2T_Exculsive { get; private set; } = false;
+    public bool O2T_P2P { get; private set; } = true;
     /// <summary>
     /// 0=Low; 1=High; 2=Scheduled; 3=Urgent
     /// </summary>
-    public byte O2T_Priority = 0;
-    public ushort O2T_datasize = 0;
-    public uint O2T_RPI = 200 * 1000; // 200 ms
+    public byte O2T_Priority { get; private set; } = 0;
+    public ushort O2T_datasize { get; private set; } = 0;
+    public uint O2T_RPI { get; private set; } = 200 * 1000; // 200 ms
 
-    public bool IsT2O = false;
-    public bool T2O_Exculsive = false;
-    public bool T2O_P2P = true;
+    public bool IsT2O { get; private set; } = false;
+    public bool T2O_Exculsive { get; private set; } = false;
+    public bool T2O_P2P { get; private set; } = true;
     /// <summary>
     /// 0=Low; 1=High; 2=Scheduled; 3=Urgent
     /// </summary>
-    public byte T2O_Priority = 0;
-    public ushort T2O_datasize = 0;
-    public uint T2O_RPI = 200 * 1000; // 200 ms
+    public byte T2O_Priority { get; private set; } = 0;
+    public ushort T2O_datasize { get; private set; } = 0;
+    public uint T2O_RPI { get; private set; } = 200 * 1000; // 200 ms
 
     public ForwardOpen_Config()
     {
     }
 
-    public ForwardOpen_Config(EnIPAttribut Output, EnIPAttribut Input, bool InputP2P, uint cycleTime)
+    public ForwardOpen_Config(EnIPAttribut output, EnIPAttribut input, bool inputP2P, uint cycleTime)
     {
-        if (Output != null)
+        if (output != null)
         {
             IsO2T = true;
-            O2T_datasize = (ushort)Output.RawData.Length;
+            O2T_datasize = (ushort)output.RawData.Length;
             O2T_RPI = cycleTime; // in microsecond,  here same for the two direction
             O2T_P2P = true; // by default in this direction
         }
-        if (Input != null)
+        if (input != null)
         {
             IsT2O = true;
-            T2O_datasize = (ushort)Input.RawData.Length;
+            T2O_datasize = (ushort)input.RawData.Length;
             T2O_RPI = cycleTime; // in microsecond, here same for the two direction
-            T2O_P2P = InputP2P;
+            T2O_P2P = inputP2P;
         }
     }
 }

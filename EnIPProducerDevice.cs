@@ -449,8 +449,8 @@ public partial class EnIPProducerDevice : ObservableObject, IDisposable
         int Lenght = 0;
 
         EnIPNetworkStatus Status = FwPkt.IsLargeForwardOpen
-            ? SendUCMM_RR_Packet(EnIPPath.GetPath(6, 1), CIPServiceCodes.LargeForwardOpen, FwPkt.toByteArray(), ref Offset, ref Lenght, out byte[] packet)
-            : SendUCMM_RR_Packet(EnIPPath.GetPath(6, 1), CIPServiceCodes.ForwardOpen, FwPkt.toByteArray(), ref Offset, ref Lenght, out packet);
+            ? SendUCMM_RR_Packet(EnIPPath.GetPath(6, 1), CIPServiceCodes.LargeForwardOpen, FwPkt.toRequestByteArray(), ref Offset, ref Lenght, out byte[] packet)
+            : SendUCMM_RR_Packet(EnIPPath.GetPath(6, 1), CIPServiceCodes.ForwardOpen, FwPkt.toRequestByteArray(), ref Offset, ref Lenght, out packet);
         if (Status == EnIPNetworkStatus.OnLine)
         {
             if (O2T != null)

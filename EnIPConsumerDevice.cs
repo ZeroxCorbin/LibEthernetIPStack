@@ -60,8 +60,12 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
 
     [ObservableProperty] private CIP_Identity_instance identity_instance;
     [ObservableProperty] private CIP_MessageRouter_instance messageRouter_instance;
+
     [ObservableProperty] private EnIPAttribut assembly_Inputs;
+    [ObservableProperty] private byte[] assembly_InputsData = new byte[300];
+
     [ObservableProperty] private EnIPAttribut assembly_Outputs;
+    [ObservableProperty] private byte[] assembly_OutputsData = [0,0,0,0,0,0,0,0,0,0];
 
     private EnIPProducerDevice _self;
 
@@ -104,7 +108,7 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
 
         Identity_instance = cIP_Identity_Instance;
         CreateMessageRouterInstance();
-
+        CreateAssemblyInstance();
 
         UdpListener.ItemMessageReceived += UdpListener_ItemMessageReceived;
         UdpListener.EncapMessageReceived += UdpListener_EncapMessageReceived;
@@ -119,26 +123,28 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
         {
             Number = 3,
             ClassesId =
-    [
-        (ushort)CIPObjectLibrary.Identity,
-                                        (ushort)CIPObjectLibrary.MessageRouter,
-                                        (ushort)CIPObjectLibrary.Assembly,
-                                    ]
+            [
+                (ushort)CIPObjectLibrary.Identity,
+                (ushort)CIPObjectLibrary.MessageRouter,
+                (ushort)CIPObjectLibrary.Assembly,
+            ]
         };
     }
 
     private void CreateAssemblyInstance()
     {
-        _self = new EnIPProducerDevice();
-        _self.SocketAddress = SocketAddress;
-        _self.VendorId = VendorId;
-        _self.DeviceType = DeviceType;
-        _self.ProductCode = ProductCode;
-        _self.Revision = Revision;
-        _self.Status = Status;
-        _self.SerialNumber = SerialNumber;
-        _self.ProductName = ProductName;
-        _self.State = State;
+        _self = new EnIPProducerDevice
+        {
+            SocketAddress = SocketAddress,
+            VendorId = VendorId,
+            DeviceType = DeviceType,
+            ProductCode = ProductCode,
+            Revision = Revision,
+            Status = Status,
+            SerialNumber = SerialNumber,
+            ProductName = ProductName,
+            State = State
+        };
 
 
         var @class = new EnIPClass(_self, 0x04);
@@ -184,7 +190,17 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
                         {
                             if (sender is EnIPTCPServerTransport transport)
                             {
-                                var dat = new UCMM_RR_Packet(CIPServiceCodes.GetAttributeSingle, false, m.Path, [], CIPGeneralSatusCode.Service_not_supported);
+                                var dat = new UCMM_RR_Packet(CIPServiceCodes.GetAttributeSingle, false, m.Path, Assembly_InputsData, CIPGeneralSatusCode.Success);
+                                Encapsulation_Packet ident = new(EncapsulationCommands.SendRRData, EncapPacket.Sessionhandle, dat.toByteArray(true));
+                                var byt = ident.toByteArray();
+                                transport.Send(byt, byt.Length, remote_address);
+                            }
+                        }
+                        else if (m.Path[3] == Assembly_Outputs.Instance.Id)
+                        {
+                            if (sender is EnIPTCPServerTransport transport)
+                            {
+                                var dat = new UCMM_RR_Packet(CIPServiceCodes.GetAttributeSingle, false, m.Path, Assembly_OutputsData, CIPGeneralSatusCode.Success);
                                 Encapsulation_Packet ident = new(EncapsulationCommands.SendRRData, EncapPacket.Sessionhandle, dat.toByteArray(true));
                                 var byt = ident.toByteArray();
                                 transport.Send(byt, byt.Length, remote_address);
@@ -220,6 +236,7 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
                                 transport.Send(byt, byt.Length, remote_address);
                             }
                     }
+                    // MessageRouter
                     else if (m.Path[1] == (byte)CIPObjectLibrary.MessageRouter)
                     {
                         if (m.Path[3] == 0)
@@ -243,25 +260,44 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
                                 transport.Send(byt, byt.Length, remote_address);
                             }
                     }
-                    else if(m.Path[1] == (byte)CIPObjectLibrary.Assembly)
+                    // Assembly
+                    else if (m.Path[1] == (byte)CIPObjectLibrary.Assembly)
                     {
                         if (m.Path[3] == 0)
                         {
                             if (sender is EnIPTCPServerTransport transport)
                             {
-                                var dat = new UCMM_RR_Packet(CIPServiceCodes.GetAttributesAll, false, m.Path, [] , CIPGeneralSatusCode.Service_not_supported);
-                                Encapsulation_Packet ident = new(EncapsulationCommands.SendRRData, EncapPacket.Sessionhandle, dat.toByteArray(true) );
+                                var dat = new UCMM_RR_Packet(CIPServiceCodes.GetAttributesAll, false, m.Path, [], CIPGeneralSatusCode.Service_not_supported);
+                                Encapsulation_Packet ident = new(EncapsulationCommands.SendRRData, EncapPacket.Sessionhandle, dat.toByteArray(true));
                                 var byt = ident.toByteArray();
                                 transport.Send(byt, byt.Length, remote_address);
                             }
                         }
                     }
                 }
-                else if(m.IsService(CIPServiceCodes.ForwardOpen) && m.IsQuery)
+                else if (m.IsService(CIPServiceCodes.ForwardOpen) && m.IsQuery)
                 {
                     if (m.Path[1] == (byte)CIPObjectLibrary.MessageRouter)
                     {
 
+                    }
+                    else if(m.Path[1] == (byte)CIPObjectLibrary.ConnectionManager)
+                    {
+                        if(m.Path[3] == 1)
+                        {
+                            var fopen = new ForwardOpen_Packet(EncapPacket.Encapsulateddata);
+
+                            Class1AttributEnrolment(Assembly_Inputs);
+                            Class1AttributEnrolment(Assembly_Outputs);
+
+                            if (sender is EnIPTCPServerTransport transport)
+                            {
+                                var dat = new UCMM_RR_Packet(CIPServiceCodes.ForwardOpen, false, m.Path, fopen.toReplyByteArray(), CIPGeneralSatusCode.Success);
+                                Encapsulation_Packet ident = new(EncapsulationCommands.SendRRData, EncapPacket.Sessionhandle, dat.toByteArray(true));
+                                var byt = ident.toByteArray();
+                                transport.Send(byt, byt.Length, remote_address);
+                            }
+                        }
                     }
                 }
                 else
@@ -353,7 +389,8 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
     }
 
     public void Class1SendO2T(SequencedAddressItem Item) => UdpListener?.Send(Item, epUdpEncap);
-
+    public void Class1SendT2O(SequencedAddressItem Item) => UdpListener?.Send(Item, epUdpEncap);
+    
     public void CopyData(EnIPProducerDevice newset)
     {
         DataLength = newset.DataLength;

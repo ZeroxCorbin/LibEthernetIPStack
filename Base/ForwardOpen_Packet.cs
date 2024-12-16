@@ -33,69 +33,69 @@ namespace LibEthernetIPStack.Base;
 // .. Codesys 3.5 EIP scanner, help a lot
 public class ForwardOpen_Packet
 {
-    public bool IsLargeForwardOpen = false;
+    public bool IsLargeForwardOpen { get; private set; } = false;
 
     // TimeOut (duration) in ms = 2^Priority_TimeTick * Timeout_Ticks
     // So with Priority_TimeTick=10, Timeout_Ticks is ~ the number of seconds
     // FIXME:
     // I don't understand the usage, with Wago Plc it's not a timeout for the
     // continuous udp flow.
-    public byte Priority_TimeTick = 10;
-    public byte Timeout_Ticks = 10;
+    public byte Priority_TimeTick { get; private set; } = 10;
+    public byte Timeout_Ticks { get; private set; } = 10;
 
-    private static uint _ConnectionId;
-    public uint O2T_ConnectionId;
-    public uint T2O_ConnectionId;
+    private static uint _connectionId;
+    public uint O2T_ConnectionId { get; private set; }
+    public uint T2O_ConnectionId { get; private set; }
 
     // shared 
-    private static ushort GlobalConnectionSerialNumber = (ushort)new Random().Next(65535);
+    private static ushort _globalConnectionSerialNumber = (ushort)new Random().Next(65535);
 
-    public ushort ConnectionSerialNumber;
-    public static ushort OriginatorVendorId = 0xFADA;
-    public static uint OriginatorSerialNumber = 0x8BADF00D;
+    public ushort ConnectionSerialNumber { get; private set; }
+    public static ushort OriginatorVendorId { get; private set; } = 0xFADA;
+    public static uint OriginatorSerialNumber { get; private set; } = 0x8BADF00D;
 
     // 0 => *4
-    public byte ConnectionTimeoutMultiplier;
+    public byte ConnectionTimeoutMultiplier { get; set; }
     public byte[] Reserved = new byte[3];
     // It's O2T_API for reply, in microseconde
-    public uint O2T_RPI = 0;
-    public uint O2T_ConnectionParameters; // size OK for ForwardOpen & LargeForwardOpen
+    public uint O2T_RPI { get; set; } = 0;
+    public uint O2T_ConnectionParameters { get; set; } // size OK for ForwardOpen & LargeForwardOpen
     // It's T2A_API for reply
-    public uint T2O_RPI = 0;
-    public uint T2O_ConnectionParameters; // size OK for ForwardOpen & LargeForwardOpen
+    public uint T2O_RPI { get; set; } = 0;
+    public uint T2O_ConnectionParameters { get; set; } // size OK for ForwardOpen & LargeForwardOpen
     // volume 1 : Figure 3-4.2 Transport Class Trigger Attribute
-    public byte TransportTrigger = 0x01; // Client class 1, cyclic;
-    public byte Connection_Path_Size;
-    public byte[] Connection_Path;
+    public byte TransportTrigger { get; private set; } = 0x01; // Client class 1, cyclic;
+    public byte Connection_Path_Size { get; private set; }
+    public byte[] Connection_Path { get; private set; }
 
     // Only use for request up to now
     // O2T & T2O could be use at the same time
     // using a Connection_Path with more than 1 reference
     // 1 Path : path is for Consumption & Production
     // 2 Path : First path is for Consumption, second path is for Production.
-    public ForwardOpen_Packet(byte[] Connection_Path, ForwardOpen_Config conf, uint? ConnectionId = null)
+    public ForwardOpen_Packet(byte[] connection_Path, ForwardOpen_Config conf, uint? connectionId = null)
     {
 
-        ConnectionSerialNumber = GlobalConnectionSerialNumber++;
+        ConnectionSerialNumber = _globalConnectionSerialNumber++;
 
         if (conf.O2T_datasize > 511 - 2 || conf.T2O_datasize > 511 - 6)
             IsLargeForwardOpen = true;
 
-        this.Connection_Path = Connection_Path;
+        Connection_Path = connection_Path;
 
-        if (ConnectionId == null)
+        if (connectionId == null)
         {
             // volume 2 : 3-3.7.1.3 Pseudo-Random Connection ID Per Connection
-            _ConnectionId += 2;
-            _ConnectionId |= (uint)(new Random().Next(65535) << 16);
+            _connectionId += 2;
+            _connectionId |= (uint)(new Random().Next(65535) << 16);
         }
         else
-            _ConnectionId = ConnectionId.Value;
+            _connectionId = connectionId.Value;
 
         if (conf.IsO2T)
-            O2T_ConnectionId = _ConnectionId;
+            O2T_ConnectionId = _connectionId;
         if (conf.IsT2O)
-            T2O_ConnectionId = _ConnectionId + 1;
+            T2O_ConnectionId = _connectionId + 1;
         /*
         // Volume 1:  chapter 3-5.5.1.1
         T->O Network Connection Parameters: 0x463b
@@ -154,16 +154,74 @@ public class ForwardOpen_Packet
             O2T_RPI = conf.O2T_RPI;
         }
     }
+
+    public ForwardOpen_Packet(byte[] data)
+    {
+        int idx = 22;
+
+        if (data.Length < 36)
+            return;
+
+        Priority_TimeTick = data[idx];
+        idx++;
+        Timeout_Ticks = data[idx];
+        idx++;
+        O2T_ConnectionId = BitConverter.ToUInt32(data, idx);
+        idx += 4;
+        T2O_ConnectionId = BitConverter.ToUInt32(data, idx);
+        idx += 4;
+        ConnectionSerialNumber = BitConverter.ToUInt16(data, idx);
+        idx += 2;
+        OriginatorVendorId = BitConverter.ToUInt16(data, idx);
+        idx += 2;
+        OriginatorSerialNumber = BitConverter.ToUInt32(data, idx);
+        idx += 4;
+        ConnectionTimeoutMultiplier = data[idx];
+        idx++;
+        Array.Copy(data, idx, Reserved, 0, 3);
+        idx += 3;
+        O2T_RPI = BitConverter.ToUInt32(data, idx);
+        idx += 4;
+        if (IsLargeForwardOpen)
+        {
+            O2T_ConnectionParameters = BitConverter.ToUInt32(data, idx);
+            idx += 4;
+        }
+        else
+        {
+            O2T_ConnectionParameters = BitConverter.ToUInt16(data, idx);
+            idx += 2;
+        }
+        T2O_RPI = BitConverter.ToUInt32(data, idx);
+        idx += 4;
+        if (IsLargeForwardOpen)
+        {
+            T2O_ConnectionParameters = BitConverter.ToUInt32(data, idx);
+            idx += 4;
+        }
+        else
+        {
+            T2O_ConnectionParameters = BitConverter.ToUInt16(data, idx);
+            idx += 2;
+        }
+        TransportTrigger = data[idx];
+        idx++;
+        Connection_Path_Size = data[idx];
+        idx++;
+        Connection_Path = new byte[Connection_Path_Size * 2];
+        Array.Copy(data, idx, Connection_Path, 0, Connection_Path.Length);
+
+    }
     public void SetTriggerType(TransportClassTriggerAttribute type) => TransportTrigger = (byte)((TransportTrigger & 0x8F) | (byte)type);
 
     // by now only use for request
-    public byte[] toByteArray()
+    public byte[] toRequestByteArray()
     {
-        int PathSize = (Connection_Path.Length / 2) + (Connection_Path.Length % 2);
-        Connection_Path_Size = (byte)PathSize;
+        int pathSize = (Connection_Path.Length / 2) + (Connection_Path.Length % 2);
+        Connection_Path_Size = (byte)pathSize;
         int shift = 0; // ForwardOpen or LargeForwardOpen
 
-        byte[] fwopen  = IsLargeForwardOpen ? (new byte[36 + (PathSize * 2) + 4]) : (new byte[36 + (PathSize * 2)]);
+        byte[] fwopen = IsLargeForwardOpen ? (new byte[36 + (pathSize * 2) + 4]) : (new byte[36 + (pathSize * 2)]);
         fwopen[0] = Priority_TimeTick;
         fwopen[1] = Timeout_Ticks;
         Array.Copy(BitConverter.GetBytes(O2T_ConnectionId), 0, fwopen, 2, 4);
@@ -195,6 +253,32 @@ public class ForwardOpen_Packet
         fwopen[34 + shift] = TransportTrigger;
         fwopen[35 + shift] = Connection_Path_Size;
         Array.Copy(Connection_Path, 0, fwopen, 36 + shift, Connection_Path.Length);
+
+        return fwopen;
+    }
+
+    public byte[] toReplyByteArray()
+    {
+        byte[] fwopen = new byte[26];
+
+        Array.Copy(BitConverter.GetBytes(O2T_ConnectionId), 0, fwopen, 0, 4);
+        Array.Copy(BitConverter.GetBytes(T2O_ConnectionId), 0, fwopen, 4, 4);
+        Array.Copy(BitConverter.GetBytes(ConnectionSerialNumber), 0, fwopen, 8, 2);
+        Array.Copy(BitConverter.GetBytes(OriginatorVendorId), 0, fwopen, 10, 2);
+        Array.Copy(BitConverter.GetBytes(OriginatorSerialNumber), 0, fwopen, 12, 4);
+        Array.Copy(BitConverter.GetBytes(O2T_RPI), 0, fwopen, 16, 4);
+        Array.Copy(BitConverter.GetBytes(T2O_RPI), 0, fwopen, 20, 4);
+        fwopen[24] = 0;
+        fwopen[25] = 0;
+
+        //Array.Copy(BitConverter.GetBytes(O2T_ConnectionId), 0, fwopen, 2, 4);
+        //Array.Copy(BitConverter.GetBytes(T2O_ConnectionId), 0, fwopen, 6, 4);
+        //Array.Copy(BitConverter.GetBytes(ConnectionSerialNumber), 0, fwopen, 10, 2);
+        //Array.Copy(BitConverter.GetBytes(OriginatorVendorId), 0, fwopen, 12, 2);
+        //Array.Copy(BitConverter.GetBytes(OriginatorSerialNumber), 0, fwopen, 14, 4);
+
+        //Array.Copy(BitConverter.GetBytes(O2T_RPI), 0, fwopen, 22, 4);
+        //Array.Copy(BitConverter.GetBytes(T2O_RPI), 0, fwopen, 28 , 4);
 
         return fwopen;
     }
