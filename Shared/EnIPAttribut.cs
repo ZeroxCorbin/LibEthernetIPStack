@@ -3,6 +3,11 @@ using System;
 using System.Net;
 
 namespace LibEthernetIPStack.Shared;
+
+// Device data dictionnary top hierarchy 
+public delegate void T2OEventHandler(EnIPAttribut sender);
+public delegate void O2TEventHandler(EnIPAttribut sender);
+
 public class EnIPAttribut : EnIPCIPObject
 {
     public EnIPInstance Instance { get; set; }
@@ -15,7 +20,7 @@ public class EnIPAttribut : EnIPCIPObject
     public SequencedAddressItem SequenceItem { get; set; }
 
     public event T2OEventHandler T2OEvent;
-
+    public event O2TEventHandler O2TEvent;
     public EnIPAttribut(EnIPInstance instance, ushort id)
     {
         Id = id;
@@ -26,14 +31,14 @@ public class EnIPAttribut : EnIPCIPObject
 
     public override bool EncodeFromDecodedMembers()
     {
-        byte[] NewRaw = new byte[RawData.Length];
+        byte[] newData = new byte[RawData.Length];
 
         try
         {
-            int Idx = 0;
-            if (DecodedMembers.EncodeAttr(Id, ref Idx, NewRaw) == true)
+            int idx = 0;
+            if (DecodedMembers.EncodeAttr(Id, ref idx, newData) == true)
             {
-                RawData = NewRaw;
+                RawData = newData;
                 return true;
             }
             else
@@ -90,24 +95,31 @@ public class EnIPAttribut : EnIPCIPObject
     // Coming from an udp class1 device, with a previous ForwardOpen action
     public void On_ItemMessageReceived(object sender, byte[] packet, SequencedAddressItem itemPacket, int offset, int msg_length, IPEndPoint remote_address)
     {
-        if (itemPacket.ConnectionId != T2O_ConnectionId) return;
-
-        if (msg_length - offset == 0) return;
-
-        RawData = new byte[msg_length - offset];
-        Array.Copy(packet, offset, RawData, 0, RawData.Length);
-
-        if (DecodedMembers != null)
+        if (itemPacket.ConnectionId == T2O_ConnectionId)
         {
-            int idx = 0;
-            try
+            if (msg_length - offset == 0) return;
+
+            RawData = new byte[msg_length - offset];
+            Array.Copy(packet, offset, RawData, 0, RawData.Length);
+
+            if (DecodedMembers != null)
             {
-                _ = DecodedMembers.DecodeAttr(Id, ref idx, RawData);
+                int idx = 0;
+                try
+                {
+                    _ = DecodedMembers.DecodeAttr(Id, ref idx, RawData);
+                }
+                catch { }
             }
-            catch { }
+
+            T2OEvent?.Invoke(this);
+        }
+        else if (itemPacket.ConnectionId == O2T_ConnectionId)
+        {
+            O2TEvent?.Invoke(this);
         }
 
-        T2OEvent?.Invoke(this);
+
     }
 
     [Obsolete("See Class1SampleClient2 sample : use ForwardOpen() on the EnIPRemoteDevice object")]

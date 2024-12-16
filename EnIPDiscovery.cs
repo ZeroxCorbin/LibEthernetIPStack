@@ -34,9 +34,6 @@ namespace LibEthernetIPStack;
 
 public delegate void DeviceArrivalHandler(EnIPRemoteProducer device);
 
-// Device data dictionnary top hierarchy 
-
-public delegate void T2OEventHandler(EnIPAttribut sender);
 
 public class EnIPDiscovery
 {
