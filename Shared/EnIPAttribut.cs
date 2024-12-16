@@ -17,7 +17,8 @@ public class EnIPAttribut : EnIPCIPObject
     // It got the required data to close the previous ForwardOpen
     private ForwardClose_Packet closePkt;
     // sequence for O->T
-    public SequencedAddressItem SequenceItem { get; set; }
+    public SequencedAddressItem O2TSequenceItem { get; set; }
+    public SequencedAddressItem T2OSequenceItem { get; set; }
 
     public event T2OEventHandler T2OEvent;
     public event O2TEventHandler O2TEvent;
@@ -35,8 +36,8 @@ public class EnIPAttribut : EnIPCIPObject
 
         try
         {
-            int idx = 0;
-            if (DecodedMembers.EncodeAttr(Id, ref idx, newData) == true)
+            int Idx = 0;
+            if (DecodedMembers.EncodeAttr(Id, ref Idx, newData) == true)
             {
                 RawData = newData;
                 return true;
@@ -88,8 +89,14 @@ public class EnIPAttribut : EnIPCIPObject
 
     public void Class1UpdateO2T()
     {
-        SequenceItem.data = RawData; // Normaly don't change between call
-        RemoteDevice.Class1SendO2T(SequenceItem);
+        O2TSequenceItem.data = RawData; // Normaly don't change between call
+        RemoteDevice.Class1SendO2T(O2TSequenceItem);
+    }
+
+    public void Class1UpdateT2O()
+    {
+        T2OSequenceItem.data = RawData; // Normaly don't change between call
+        //RemoteDevice.Class1SendT2O(T2OSequenceItem);
     }
 
     // Coming from an udp class1 device, with a previous ForwardOpen action
