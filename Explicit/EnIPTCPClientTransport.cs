@@ -25,6 +25,7 @@ using LibEthernetIPStack.Base;
 using System;
 using System.Diagnostics;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,9 +34,10 @@ namespace LibEthernetIPStack.Explicit;
 public class EnIPTCPClientTransport
 {
     private TcpClient Tcpclient;
-    private int Timeout = 100;
+    private int Timeout = 2000;
 
     public EnIPTCPClientTransport(int Timeout) => this.Timeout = Timeout;
+    public EnIPTCPClientTransport() { }
 
     public bool IsConnected => Tcpclient != null && Tcpclient.Connected;
 
@@ -72,7 +74,7 @@ public class EnIPTCPClientTransport
         }
         catch
         {
-            Tcpclient = null;
+            Disconnect();
             Trace.WriteLine("Connection fail to " + ep.ToString());
             return false;
         }
@@ -99,7 +101,6 @@ public class EnIPTCPClientTransport
                 _ = Tcpclient.Client.Receive(packet);
 
             _ = Tcpclient.Client.Send(SendPkt.toByteArray());
-
             Lenght = Tcpclient.Client.Receive(packet, SocketFlags.None);
             if (Lenght > 24)
                 ReceivePkt = new Encapsulation_Packet(packet, ref Offset, Lenght);
@@ -109,7 +110,7 @@ public class EnIPTCPClientTransport
         catch(Exception ex)
         {
             Trace.WriteLine("Error in TcpClient Send Receive");
-            Tcpclient = null;
+            Disconnect();
         }
 
         return Lenght;
@@ -124,7 +125,7 @@ public class EnIPTCPClientTransport
         catch
         {
             Trace.WriteLine("Error in TcpClient Send");
-            Tcpclient = null;
+            Disconnect();
         }
     }
 }

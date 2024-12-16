@@ -163,7 +163,7 @@ public class ForwardOpen_Packet
         Connection_Path_Size = (byte)PathSize;
         int shift = 0; // ForwardOpen or LargeForwardOpen
 
-        byte[] fwopen = IsLargeForwardOpen ? (new byte[36 + (PathSize * 2) + 4]) : (new byte[36 + (PathSize * 2)]);
+        byte[] fwopen  = IsLargeForwardOpen ? (new byte[36 + (PathSize * 2) + 4]) : (new byte[36 + (PathSize * 2)]);
         fwopen[0] = Priority_TimeTick;
         fwopen[1] = Timeout_Ticks;
         Array.Copy(BitConverter.GetBytes(O2T_ConnectionId), 0, fwopen, 2, 4);
@@ -198,4 +198,5 @@ public class ForwardOpen_Packet
 
         return fwopen;
     }
+
 }

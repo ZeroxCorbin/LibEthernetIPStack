@@ -136,11 +136,11 @@ public partial class EnIPProducerDevice : ObservableObject, IDisposable
         this.ep = ep;
         IdentityEncapPacket = encapsulation;
         epUdp = new IPEndPoint(ep.Address, 2222);
-        Tcpclient = new EnIPTCPClientTransport(TcpTimeout);
+        Tcpclient = new EnIPTCPClientTransport();
         FromListIdentityResponse(DataArray, ref Offset);
     }
 
-    public EnIPProducerDevice() => Tcpclient = new EnIPTCPClientTransport(100);
+    public EnIPProducerDevice() => Tcpclient = new EnIPTCPClientTransport();
 
     public void Dispose()
     {
@@ -190,7 +190,8 @@ public partial class EnIPProducerDevice : ObservableObject, IDisposable
 
     public bool Connect()
     {
-        if (Tcpclient.IsConnected == true) return true;
+        if (Tcpclient.IsConnected == true) 
+            return true;
 
         SessionHandle = 0;
 
@@ -351,15 +352,15 @@ public partial class EnIPProducerDevice : ObservableObject, IDisposable
             }
         }
 
-        //if (SupportedClassLists.Count == 0) // service not supported : add basic class, but some could be not present
-        //{
-        //    SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.Identity));
-        //    SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.MessageRouter));
-        //    SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.Assembly));
-        //    SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.TCPIPInterface));
-        //    SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.EtherNetLink));
-        //    SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.ConnectionManager));
-        //}
+        if (SupportedClassLists.Count == 0) // service not supported : add basic class, but some could be not present
+        {
+            SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.Identity));
+            SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.MessageRouter));
+            SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.Assembly));
+            SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.TCPIPInterface));
+            SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.EtherNetLink));
+            SupportedClassLists.Add(new EnIPClass(this, (ushort)CIPObjectLibrary.ConnectionManager));
+        }
 
         return SupportedClassLists.ToList();
     }
