@@ -59,6 +59,7 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
     [ObservableProperty][property: JsonIgnore] private ushort encapsulationVersion;
 
     [ObservableProperty] private CIP_Identity_instance identity_instance;
+    [ObservableProperty] private CIP_MessageRouter_instance messageRouter_instance;
 
     private EnIPAttribut _assemblyClass;
 
@@ -100,24 +101,113 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
         UdpListener?.JoinMulticastGroup(epUdpCIP.Address);
 
         Identity_instance = cIP_Identity_Instance;
+        CreateMessageRouterInstance();
 
         UdpListener.ItemMessageReceived += UdpListener_ItemMessageReceived;
         UdpListener.EncapMessageReceived += UdpListener_EncapMessageReceived;
         Tcpserver.MessageReceived += Tcpserver_MessageReceived;
     }
 
+    private void CreateMessageRouterInstance()
+    {
+        MessageRouter_instance = new CIP_MessageRouter_instance();
+
+        MessageRouter_instance.SupportedObjects = new()
+        {
+            Number = 3,
+            ClassesId =
+    [
+        (ushort)CIPObjectLibrary.Identity,
+                                        (ushort)CIPObjectLibrary.MessageRouter,
+                                        (ushort)CIPObjectLibrary.Assembly,
+                                    ]
+        };
+    }
+
     private void Tcpserver_MessageReceived(object sender, byte[] packet, Encapsulation_Packet EncapPacket, int offset, int msg_length, IPEndPoint remote_address)
     {
         if (EncapPacket.Command == EncapsulationCommands.SendRRData)
         {
-            UCMM_RR_Packet m = new(packet, ref offset, msg_length);
+            UCMM_RR_Packet m = new(packet, ref offset, msg_length, true);
             if (m.IsOK)
             {
-                if (m.IsService(CIPServiceCodes.GetAttributeSingle) || m.IsService(CIPServiceCodes.SetAttributeSingle))
+
+                if (m.IsService(CIPServiceCodes.GetAttributeSingle) && m.IsQuery)
                 {
-                    //EnIPAttribut att = new(m., this);
-                    //att.On_ItemMessageReceived(sender, packet, m, offset, msg_length, remote_address);
+                    if (m.Path[1] == (byte)CIPObjectLibrary.MessageRouter)
+                    {
+                        //Instance 1, Atribute 1 (Object List)
+                        if (m.Path[3] == 1 && m.Path[5] == 1)
+                        {
+                            if (sender is EnIPTCPServerTransport transport)
+                            {
+                                var dat = new UCMM_RR_Packet(CIPServiceCodes.GetAttributeSingle, false, m.Path, [.. MessageRouter_instance.DecodeAttr(1)]);
+
+                                Encapsulation_Packet ident = new(EncapsulationCommands.SendRRData, EncapPacket.Sessionhandle, dat.toByteArray(true));
+
+                                // ident.Status = EncapsulationStatus.Success;
+                                var byt = ident.toByteArray();
+                                transport.Send(byt, byt.Length, remote_address);
+                            }
+                        }
+                    }
+
                 }
+                else if (m.IsService(CIPServiceCodes.GetAttributesAll) && m.IsQuery)
+                {
+                    if (m.Path[1] == (byte)CIPObjectLibrary.Identity)
+                    {
+
+                        if (m.Path[3] == 0)
+                        {
+                            if (sender is EnIPTCPServerTransport transport)
+                            {
+                                byte[] data = [1, 0, 1, 0, 7, 0, 7, 0];
+                                var dat = new UCMM_RR_Packet(CIPServiceCodes.GetAttributesAll, false, m.Path, [.. data]);
+                                Encapsulation_Packet ident = new(EncapsulationCommands.SendRRData, EncapPacket.Sessionhandle, dat.toByteArray(true));
+                                var byt = ident.toByteArray();
+                                transport.Send(byt, byt.Length, remote_address);
+                            }
+                        }
+                        else if (m.Path[3] == 1)
+                            if (sender is EnIPTCPServerTransport transport)
+                            {
+                                var data = Identity_instance.EncodeInstance();
+                                var dat = new UCMM_RR_Packet(CIPServiceCodes.GetAttributesAll, false, m.Path, [.. data]);
+                                Encapsulation_Packet ident = new(EncapsulationCommands.SendRRData, EncapPacket.Sessionhandle, dat.toByteArray(true));
+
+                                var byt = ident.toByteArray();
+                                transport.Send(byt, byt.Length, remote_address);
+                            }
+                    }
+                    else if (m.Path[1] == (byte)CIPObjectLibrary.MessageRouter)
+                    {
+                        if (m.Path[3] == 0)
+                        {
+                            //if (sender is EnIPTCPServerTransport transport)
+                            //{
+                            //    byte[] data = [1, 0, 1, 0, 7, 0, 7, 0];
+                            //    var dat = new UCMM_RR_Packet(CIPServiceCodes.GetAttributesAll, false, m.Path, [.. data]);
+                            //    Encapsulation_Packet ident = new(EncapsulationCommands.SendRRData, EncapPacket.Sessionhandle, dat.toByteArray(true));
+                            //    var byt = ident.toByteArray();
+                            //    transport.Send(byt, byt.Length, remote_address);
+                            //}
+                        }
+                        else if (m.Path[3] == 1)
+                            if (sender is EnIPTCPServerTransport transport)
+                            {
+                                var data = MessageRouter_instance.EncodeInstance();
+                                var dat = new UCMM_RR_Packet(CIPServiceCodes.GetAttributesAll, false, m.Path, [.. data]);
+                                Encapsulation_Packet ident = new(EncapsulationCommands.SendRRData, EncapPacket.Sessionhandle, dat.toByteArray(true));
+                                var byt = ident.toByteArray();
+                                transport.Send(byt, byt.Length, remote_address);
+                            }
+                    }
+                }
+            }
+            else
+            {
+
             }
         }
         else if (EncapPacket.Command == EncapsulationCommands.RegisterSession)
@@ -148,13 +238,23 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
             NetworkStatusUpdate?.Invoke(EnIPNetworkStatus.OnLine, "Identity requested from " + remote_address.ToString());
             if (sender is EnIPUDPTransport transport)
             {
+
                 List<byte> data =
                 [
-                    1, 0, 0, 0, 0, 0, 0, 0,
                     .. new EnIPSocketAddress(epUdpEncap).toByteArray().ToList(),
-                    .. Identity_instance.EncodeAttr(),
+                    .. Identity_instance.GetRawBytes(),
                 ];
-                Encapsulation_Packet ident = new(EncapsulationCommands.ListIdentity, 0, data.ToArray());
+                List<byte> data1 =
+                [
+                    1, 0,
+                    .. BitConverter.GetBytes((int)CommonPacketItemIdNumbers.ListIdentityResponse).Take(2),
+                    .. BitConverter.GetBytes(data.Count() + 3).Take(2),
+                    1,0,
+                    .. data,
+                    .. BitConverter.GetBytes((int)IdentityObjectState.Operational).Take(1),
+                ];
+
+                Encapsulation_Packet ident = new(EncapsulationCommands.ListIdentity, 0, data1.ToArray());
 
                 transport.Send(ident, remote_address);
             }
@@ -214,7 +314,7 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
 
     private bool CreateNewSession(object sender, IPEndPoint consumer, Encapsulation_Packet encap)
     {
-        uint handle = 123654;
+        uint handle = rnd32();
         if (sender is EnIPTCPServerTransport transport)
         {
             byte[] bytes = new byte[4];
@@ -242,5 +342,11 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
 
         NetworkStatusUpdate?.Invoke(state, ex.Message);
         return state;
+    }
+
+    private static readonly Random _rand = new();
+    private static uint rnd32()
+    {
+        return (uint)(_rand.Next(1 << 30)) << 2 | (uint)(_rand.Next(1 << 2));
     }
 }

@@ -24,6 +24,8 @@
 *
 *********************************************************************/
 using Newtonsoft.Json;
+using System.Linq;
+using System.Net.NetworkInformation;
 
 namespace LibEthernetIPStack.CIP;
 
@@ -87,4 +89,45 @@ public class CIP_DLR_instance : CIPObject
         }
         return false;
     }
+
+    public override bool EncodeAttr(int AttrNum, ref int Idx, byte[] b)
+    {
+        switch (AttrNum)
+        {
+            case 1:
+                if (Network_Topology == null) return false;
+                Setbyte(ref Idx, b, Network_Topology);
+                return true;
+            case 2:
+                if (Network_Status == null) return false;
+                Setbyte(ref Idx, b, Network_Status);
+                return true;
+            case 3:
+                if (Active_Supervisor_IPAddress == null) return false;
+                SetIPAddress(ref Idx, b, System.Net.IPAddress.Parse(Active_Supervisor_IPAddress));
+                return true;
+            case 4:
+                if (Active_Supervisor_PhysicalAddress == null) return false;
+                SetPhysicalAddress(ref Idx, b, PhysicalAddress.Parse(Active_Supervisor_PhysicalAddress));
+                return true;
+            case 5:
+                if (Capability_Flag == null) return false;
+                SetUInt32(ref Idx, b, Capability_Flag);
+                return true;
+        }
+        return false;
+    }
+    public byte[] EncodeInstance()
+    {
+        var b = new byte[512];
+        int Idx = 0;
+        foreach (var prop in GetType().GetProperties().Where(p => p.GetCustomAttributes(typeof(CIPAttributId), false).Length > 0))
+        {
+            CIPAttributId attr = (CIPAttributId)prop.GetCustomAttributes(typeof(CIPAttributId), false)[0];
+            if (attr.Id != 0)
+                EncodeAttr(attr.Id, ref Idx, b);
+        }
+        return b.Take(Idx).ToArray();
+    }
+
 }

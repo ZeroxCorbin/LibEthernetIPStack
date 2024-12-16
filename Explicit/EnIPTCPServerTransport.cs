@@ -66,7 +66,7 @@ public class EnIPTCPServerTransport
                 Trace.WriteLine("Arrival of " + ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString());
 
                 ClientsList.Add(client);
-
+                
                 //Thread 
                 Thread clientThread = new(HandleClientComm)
                 {
@@ -102,21 +102,29 @@ public class EnIPTCPServerTransport
         {
             NetworkStream clientStream = tcpClient.GetStream();
 
-            int Lenght = clientStream.Read(Rcp, 0, 1500);
+            while (true)
+            {
+                if (clientStream.DataAvailable)
+                {
+                    int Lenght = clientStream.Read(Rcp, 0, 1500);
 
-            if (Lenght >= 24)
-                try
-                {
-                    int Offset = 0;
-                    Encapsulation_Packet Encapacket = new(Rcp, ref Offset, Lenght);
-                   _ = Task.Run(() => MessageReceived?.Invoke(this, Rcp, Encapacket, Offset, Lenght, (IPEndPoint)tcpClient.Client.RemoteEndPoint));
+                    if (Lenght >= 24)
+                        try
+                        {
+                            int Offset = 0;
+                            Encapsulation_Packet Encapacket = new(Rcp, ref Offset, Lenght);
+                           _ = Task.Run(() => MessageReceived?.Invoke(this, Rcp, Encapacket, Offset, Lenght, (IPEndPoint)tcpClient.Client.RemoteEndPoint));
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.TraceError("Exception in tcp recieve: " + ex.Message);
+                        }
+                    else
+                        Trace.TraceError("Too small packet received");
                 }
-                catch (Exception ex)
-                {
-                    Trace.TraceError("Exception in tcp recieve: " + ex.Message);
-                }
-            else
-                Trace.TraceError("Too small packet received");
+                Thread.Sleep(1);
+            }
+
         }
         catch
         {

@@ -24,7 +24,9 @@
 *
 *********************************************************************/
 using Newtonsoft.Json;
+using System;
 using System.ComponentModel;
+using System.Linq;
 
 namespace LibEthernetIPStack.CIP;
 
@@ -105,5 +107,74 @@ public class CIP_MessageRouter_instance : CIPObject
 
         }
         return false;
+    }
+
+    public byte[] DecodeAttr(int AttrNum)
+    {
+        switch (AttrNum)
+        {
+            case 1:
+                if (SupportedObjects == null) return null;
+                byte[] b = new byte[2 + SupportedObjects.Number.Value * 2];
+                int Idx = 0;
+                SetUInt16(ref Idx, b, SupportedObjects.Number);
+                for (int i = 0; i < SupportedObjects.Number.Value; i++)
+                    SetUInt16(ref Idx, b, SupportedObjects.ClassesId[i]);
+                return b;
+            case 2:
+                if (MaxConnectionsSupported == null) return null;
+                return BitConverter.GetBytes(MaxConnectionsSupported.Value);
+            case 3:
+                if (NumberOfCurrentConnections == null) return null;
+                return BitConverter.GetBytes(NumberOfCurrentConnections.Value);
+            case 4:
+                if (ActiveConnections == null) return null;
+                byte[] b2 = new byte[ActiveConnections.Length * 2];
+                Idx = 0;
+                for (int i = 0; i < ActiveConnections.Length; i++)
+                    SetUInt16(ref Idx, b2, ActiveConnections[i]);
+                return b2;
+        }
+        return null;
+    }
+
+    public override bool EncodeAttr(int AttrNum, ref int Idx, byte[] b)
+    {
+        switch (AttrNum)
+        {
+            case 1:
+                if (SupportedObjects == null) return false;
+                SetUInt16(ref Idx, b, SupportedObjects.Number);
+                for (int i = 0; i < SupportedObjects.Number.Value; i++)
+                    SetUInt16(ref Idx, b, SupportedObjects.ClassesId[i]);
+                return true;
+            case 2:
+                if (MaxConnectionsSupported == null) return false;
+                SetUInt16(ref Idx, b, MaxConnectionsSupported);
+                return true;
+            case 3:
+                if (NumberOfCurrentConnections == null) return false;
+                SetUInt16(ref Idx, b, NumberOfCurrentConnections);
+                return true;
+            case 4:
+                if (ActiveConnections == null) return false;
+                for (int i = 0; i < ActiveConnections.Length; i++)
+                    SetUInt16(ref Idx, b, ActiveConnections[i]);
+                return true;
+        }
+        return false;
+    }
+
+    public override byte[] EncodeInstance()
+    {
+        var b = new byte[512];
+        int Idx = 0;
+        foreach (var prop in GetType().GetProperties().Where(p => p.GetCustomAttributes(typeof(CIPAttributId), false).Length > 0))
+        {
+            CIPAttributId attr = (CIPAttributId)prop.GetCustomAttributes(typeof(CIPAttributId), false)[0];
+            if (attr.Id != 0)
+                EncodeAttr(attr.Id, ref Idx, b);
+        }
+        return b.Take(Idx).ToArray();
     }
 }

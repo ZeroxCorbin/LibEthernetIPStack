@@ -61,11 +61,11 @@ public class UCMM_RR_Packet
         this.Data = Data;
     }
 
-    public bool IsService(CIPServiceCodes Service)
+    public bool IsService(CIPServiceCodes service)
     {
         byte s = (byte)(this.Service & 0x7F);
 
-        return s == (byte)Service || this.Service > 0x80 && s == (byte)CIPServiceCodes.UnconnectedSend;
+        return s == (byte)service || this.Service > 0x80 && s == (byte)CIPServiceCodes.UnconnectedSend;
     }
 
     public bool IsResponse => Service > 0x80;
@@ -107,6 +107,33 @@ public class UCMM_RR_Packet
         }
     }
 
+    public UCMM_RR_Packet(byte[] DataArray, ref int Offset, int Lenght, bool IsRequest)
+    {
+        GeneralStatus = CIPGeneralSatusCode.Success;
+
+        if (Offset + 20 > Lenght)
+            GeneralStatus = CIPGeneralSatusCode.Not_enough_data;
+
+        // Skip 16 bytes of the Command specific data
+        // Volume 2 : Table 3-2.1 UCMM Request & Table 3-2.2 UCMM Reply
+        Offset += 16;
+
+        Service = DataArray[Offset];
+        Offset += 1;
+
+        int pathlen = DataArray[Offset];
+        Offset += 1;
+
+        if (Offset + pathlen * 2 > Lenght)
+            GeneralStatus = CIPGeneralSatusCode.Not_enough_data;
+
+        Path = new byte[pathlen * 2];
+        Array.Copy(DataArray, Offset, Path, 0, pathlen * 2);
+        Offset += pathlen * 2;
+
+
+    }
+
     // up to now it's only a request paquet
     public byte[] toByteArray()
     {
@@ -136,4 +163,38 @@ public class UCMM_RR_Packet
 
         return retVal;
     }
+
+    public byte[] toByteArray(bool isResponse)
+    {
+        if (Path == null || Path.Length % 2 != 0)
+        {
+            Trace.TraceError("Request_Path is not OK");
+            return null;
+        }
+
+        DataLength = (ushort)(4 + (Data == null ? 0 : Data.Length));
+
+        // Volume 2 : Table 3-2.1 UCMM Request
+        byte[] retVal = new byte[10 + 6 + DataLength];
+        Array.Copy(BitConverter.GetBytes(ItemCount), 0, retVal, 6, 2);
+
+        Array.Copy(BitConverter.GetBytes((ushort)IdemId), 0, retVal, 12, 2);
+
+        Array.Copy(BitConverter.GetBytes(DataLength), 0, retVal, 14, 2);
+
+        retVal[16] = Service;
+        retVal[17] = 0x00; //reservered
+        retVal[18] = (byte)GeneralStatus;
+        retVal[19] = 0;
+
+        //retVal[17] = (byte)(Path.Length >> 1);
+
+        //Array.Copy(Path, 0, retVal, 10 + 8, Path.Length);
+
+        if (Data != null)
+            Array.Copy(Data, 0, retVal, 20, Data.Length);
+
+        return retVal;
+    }
+
 }
