@@ -67,7 +67,7 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
     [ObservableProperty] private EnIPAttribut assembly_Outputs;
     [ObservableProperty] private byte[] assembly_OutputsData = [0,0,0,0,0,0,0,0,0,0];
 
-    private EnIPProducerDevice _self;
+    private EnIPRemoteProducer _self;
 
     private IPEndPoint epTcpEncap;
     private IPEndPoint epUdpCIP;
@@ -133,7 +133,7 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
 
     private void CreateAssemblyInstance()
     {
-        _self = new EnIPProducerDevice
+        _self = new EnIPRemoteProducer
         {
             SocketAddress = SocketAddress,
             VendorId = VendorId,
@@ -290,6 +290,7 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
                             Class1AttributEnrolment(Assembly_Inputs);
                             Class1AttributEnrolment(Assembly_Outputs);
 
+                            Assembly_Outputs.O2TEvent += Assembly_Outputs_O2TEvent;
                             if (sender is EnIPTCPServerTransport transport)
                             {
                                 var dat = new UCMM_RR_Packet(CIPServiceCodes.ForwardOpen, false, m.Path, fopen.toReplyByteArray(), CIPGeneralSatusCode.Success);
@@ -328,6 +329,11 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
         {
 
         }
+    }
+
+    private void Assembly_Outputs_O2TEvent(EnIPAttribut sender)
+    {
+
     }
 
     private void UdpListener_EncapMessageReceived(object sender, byte[] packet, Encapsulation_Packet EncapPacket, int offset, int msg_length, IPEndPoint remote_address)
@@ -391,7 +397,7 @@ public partial class EnIPConsumerDevice : ObservableObject, IDisposable
     public void Class1SendO2T(SequencedAddressItem Item) => UdpListener?.Send(Item, epUdpEncap);
     public void Class1SendT2O(SequencedAddressItem Item) => UdpListener?.Send(Item, epUdpEncap);
     
-    public void CopyData(EnIPProducerDevice newset)
+    public void CopyData(EnIPRemoteProducer newset)
     {
         DataLength = newset.DataLength;
         EncapsulationVersion = newset.EncapsulationVersion;

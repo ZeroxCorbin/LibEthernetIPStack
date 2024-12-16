@@ -271,15 +271,6 @@ public class ForwardOpen_Packet
         fwopen[24] = 0;
         fwopen[25] = 0;
 
-        //Array.Copy(BitConverter.GetBytes(O2T_ConnectionId), 0, fwopen, 2, 4);
-        //Array.Copy(BitConverter.GetBytes(T2O_ConnectionId), 0, fwopen, 6, 4);
-        //Array.Copy(BitConverter.GetBytes(ConnectionSerialNumber), 0, fwopen, 10, 2);
-        //Array.Copy(BitConverter.GetBytes(OriginatorVendorId), 0, fwopen, 12, 2);
-        //Array.Copy(BitConverter.GetBytes(OriginatorSerialNumber), 0, fwopen, 14, 4);
-
-        //Array.Copy(BitConverter.GetBytes(O2T_RPI), 0, fwopen, 22, 4);
-        //Array.Copy(BitConverter.GetBytes(T2O_RPI), 0, fwopen, 28 , 4);
-
         return fwopen;
     }
 
