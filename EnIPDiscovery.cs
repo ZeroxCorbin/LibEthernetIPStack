@@ -32,7 +32,7 @@ using System.Net;
 
 namespace LibEthernetIPStack;
 
-public delegate void DeviceArrivalHandler(EnIPRemoteProducer device);
+public delegate void DeviceArrivalHandler(EnIPProducer device);
 
 
 public class EnIPDiscovery
@@ -64,7 +64,7 @@ public class EnIPDiscovery
                 offset += 2;
                 for (int i = 0; i < NbDevices; i++)
                 {
-                    EnIPRemoteProducer device = new(remote_address, TcpTimeout, packet, EncapPacket, ref offset);
+                    EnIPProducer device = new(remote_address, TcpTimeout, packet, EncapPacket, ref offset);
                     DeviceArrival(device);
                 }
             }

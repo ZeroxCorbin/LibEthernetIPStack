@@ -12,12 +12,14 @@ public class EnIPAttribut : EnIPCIPObject
 {
     public EnIPInstance Instance { get; set; }
     // Forward Open
-    public uint T2O_ConnectionId, O2T_ConnectionId;
+    public uint T2O_ConnectionId { get; set; }
+    public uint O2T_ConnectionId { get; set; }
 
     // It got the required data to close the previous ForwardOpen
     private ForwardClose_Packet closePkt;
     // sequence for O->T
-    public SequencedAddressItem SequenceItem { get; set; }
+    public SequencedAddressItem O2TSequenceItem { get; set; }
+    public SequencedAddressItem T2OSequenceItem { get; set; }
 
     public event T2OEventHandler T2OEvent;
     public event O2TEventHandler O2TEvent;
@@ -35,8 +37,8 @@ public class EnIPAttribut : EnIPCIPObject
 
         try
         {
-            int idx = 0;
-            if (DecodedMembers.EncodeAttr(Id, ref idx, newData) == true)
+            int Idx = 0;
+            if (DecodedMembers.EncodeAttr(Id, ref Idx, newData) == true)
             {
                 RawData = newData;
                 return true;
@@ -88,8 +90,14 @@ public class EnIPAttribut : EnIPCIPObject
 
     public void Class1UpdateO2T()
     {
-        SequenceItem.data = RawData; // Normaly don't change between call
-        RemoteDevice.Class1SendO2T(SequenceItem);
+        O2TSequenceItem.data = RawData; // Normaly don't change between call
+        RemoteDevice.Class1SendO2T(O2TSequenceItem);
+    }
+
+    public void Class1UpdateT2O(byte[] data)
+    {
+        T2OSequenceItem.data = data; // Normaly don't change between call
+        RemoteDevice.Class1SendT2O(T2OSequenceItem);
     }
 
     // Coming from an udp class1 device, with a previous ForwardOpen action
@@ -116,7 +124,27 @@ public class EnIPAttribut : EnIPCIPObject
         }
         else if (itemPacket.ConnectionId == O2T_ConnectionId)
         {
+
+            if (msg_length - offset == 0) return;
+
+            RawData = new byte[msg_length - offset];
+            Array.Copy(packet, offset, RawData, 0, RawData.Length);
+
+            if (DecodedMembers != null)
+            {
+                int idx = 0;
+                try
+                {
+                    _ = DecodedMembers.DecodeAttr(Id, ref idx, RawData);
+                }
+                catch { }
+            }
+
             O2TEvent?.Invoke(this);
+        }
+        else
+        {
+
         }
 
 

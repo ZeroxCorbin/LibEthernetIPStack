@@ -9,7 +9,7 @@ public class EnIPClass : EnIPCIPObject
 {
     private Type DecoderClass;
 
-    public EnIPClass(EnIPRemoteProducer remoteDevice, ushort id, Type decoderClass = null)
+    public EnIPClass(EnIPProducer remoteDevice, ushort id, Type decoderClass = null)
     {
         Id = id;
         RemoteDevice = remoteDevice;

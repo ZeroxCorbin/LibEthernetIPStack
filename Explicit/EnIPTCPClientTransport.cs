@@ -36,8 +36,10 @@ public class EnIPTCPClientTransport
     private TcpClient Tcpclient;
     private int Timeout = 2000;
 
-    public EnIPTCPClientTransport(int Timeout) => this.Timeout = Timeout;
+
     public EnIPTCPClientTransport() { }
+    public EnIPTCPClientTransport(int Timeout) => this.Timeout = Timeout;
+
 
     public bool IsConnected => Tcpclient != null && Tcpclient.Connected;
 

@@ -18,7 +18,7 @@ public abstract class EnIPCIPObject
 
     public abstract string GetStrPath();
     [JsonIgnore]
-    public EnIPRemoteProducer RemoteDevice { get; set; }
+    public EnIPProducer RemoteDevice { get; set; }
 
     protected EnIPNetworkStatus ReadDataFromNetwork(byte[] Path, CIPServiceCodes Service)
     {
