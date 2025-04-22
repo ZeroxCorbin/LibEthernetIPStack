@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LibEthernetIPStack.Shared
 {
-    public class Helpers
+    public static class Helpers
     {
         public static List<byte> GetPath(ushort Class, uint Instance, ushort? Attribute = null) // EnIPBase.cs:GetPath is wrong
         { // see Apendix C: Data Management: 
